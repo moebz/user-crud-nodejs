@@ -81,10 +81,7 @@ const login = async (request, response) => {
     return response.status(httpErrorStatus).send(errorMessage);
   }
 
-  const bcrypt = require('bcrypt');
-
-  const loginResult = await bcrypt
-    .compare(passwd, user.passwd);
+  const loginResult = await helpers.comparePasswords(passwd, user.passwd);
 
   if (!loginResult) {
     return response.status(httpErrorStatus).send(errorMessage);

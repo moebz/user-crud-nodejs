@@ -11,6 +11,11 @@ const hashPassword = async (passwd) => {
   return passwordHash;
 };
 
+const comparePasswords = async (clearTextPassword, hashedPassword) => {
+  return bcrypt.compare(clearTextPassword, hashedPassword);
+};
+
 module.exports = {
   hashPassword,
+  comparePasswords,
 };
