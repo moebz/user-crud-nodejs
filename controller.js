@@ -90,9 +90,48 @@ const login = async (request, response) => {
   return response.status(200).send('Login success');
 };
 
+const updateUser = async (request, response) => {
+  const id = parseInt(request.params.id)
+  const {
+    firstname,
+    lastname,
+    email,
+    username,
+  } = request.body;
+
+  await pool.query(
+    `UPDATE user_account SET
+      firstname = $1,
+      lastname = $2,
+      email = $3,
+      username = $4
+    WHERE
+      id = $5`,
+    [
+      firstname,
+      lastname,
+      email,
+      username,
+      id
+    ],
+  );
+
+  response.status(200).send(`User modified with ID: ${id}`);
+};
+
+const deleteUser = async (request, response) => {
+  const id = parseInt(request.params.id);
+
+  await pool.query('DELETE FROM user_account WHERE id = $1', [id]);
+
+  response.status(200).send(`User deleted with ID: ${id}`)
+};
+
 module.exports = {
   getUsers,
   getUserById,
   createUser,
   login,
+  updateUser,
+  deleteUser,
 };
