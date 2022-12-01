@@ -1,4 +1,5 @@
 const Pool = require('pg').Pool;
+const jwt = require('jsonwebtoken');
 
 const helpers = require('./helpers');
 
@@ -8,6 +9,8 @@ const {
   RDB_NAME,
   RDB_PASSWORD,
   RDB_PORT,
+  JWT_SECRET,
+  JWT_EXPIRATION,
 } = process.env;
 
 const pool = new Pool({
@@ -38,6 +41,14 @@ const createUser = async (request, response) => {
     passwd
   } = request.body;
 
+  console.log({
+    requestBody: request.body,
+    requestFile: request.file,
+  });
+
+  //prueba
+  return response.status(200).send('//prueba');
+
   const passwordHash = await helpers.hashPassword(passwd);
 
   const results = await pool.query(
@@ -46,13 +57,15 @@ const createUser = async (request, response) => {
       lastname,
       email,
       username,
-      passwd
+      passwd,
+      avatar_url
     ) VALUES (
       $1,
       $2,
       $3,
       $4,
-      $5
+      $5,
+      $6
     ) RETURNING *`,
     [
       firstname,
@@ -60,6 +73,7 @@ const createUser = async (request, response) => {
       email,
       username,
       passwordHash,
+      avatar_url,
     ]
   );
 
@@ -76,18 +90,46 @@ const login = async (request, response) => {
   const httpErrorStatus = 400;
 
   const result = await pool.query('SELECT * FROM user_account WHERE username = $1', [username]);
+
   const user = result?.rows?.[0];
+
   if (!user) {
-    return response.status(httpErrorStatus).send(errorMessage);
+    return response.status(httpErrorStatus).send({
+      message: errorMessage,
+    });
   }
 
   const loginResult = await helpers.comparePasswords(passwd, user.passwd);
 
   if (!loginResult) {
-    return response.status(httpErrorStatus).send(errorMessage);
+    return response.status(httpErrorStatus).send({
+      message: errorMessage,
+    });
   }
 
-  return response.status(200).send('Login success');
+  const tokenPayload = {
+    id: user.id,
+  };
+
+  const tokenOptions = {
+    expiresIn: JWT_EXPIRATION,
+  };
+
+  console.log({
+    tokenOptions,
+  });
+
+  const token = jwt.sign(
+    tokenPayload,
+    JWT_SECRET,
+    tokenOptions,
+  );
+
+  return response.status(200).send({
+    data: {
+      userToken: token
+    }
+  });
 };
 
 const updateUser = async (request, response) => {
