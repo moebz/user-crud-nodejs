@@ -1,18 +1,3 @@
--- MARK: SCHEMA
-
-CREATE TABLE public.user_account (
-	id SERIAL PRIMARY KEY,
-	firstname varchar NULL,
-	lastname varchar NULL,
-	email varchar NULL,
-	username varchar NULL,
-	passwd varchar NULL,
-	CONSTRAINT user_email_un UNIQUE (email),
-	CONSTRAINT user_username_un UNIQUE (username)
-);
-
--- MARK: DATA
-
 insert into user_account (id, firstname, lastname, email, username, passwd) values (1, 'Linzy', 'Stickens', 'lstickens0@sourceforge.net', 'lstickens0', 'ZCfVfKGReHs');
 insert into user_account (id, firstname, lastname, email, username, passwd) values (2, 'Leonhard', 'Jerdan', 'ljerdan1@facebook.com', 'ljerdan1', 'a8DvF6');
 insert into user_account (id, firstname, lastname, email, username, passwd) values (3, 'Alastair', 'Nial', 'anial2@github.com', 'anial2', '83HttLrJ4k');
@@ -1013,6 +998,3 @@ insert into user_account (id, firstname, lastname, email, username, passwd) valu
 insert into user_account (id, firstname, lastname, email, username, passwd) values (998, 'Catarina', 'Shire', 'cshirerp@furl.net', 'cshirerp', 'Puqi97');
 insert into user_account (id, firstname, lastname, email, username, passwd) values (999, 'Tanney', 'Manion', 'tmanionrq@geocities.com', 'tmanionrq', 'vzPSZdJUqEKR');
 insert into user_account (id, firstname, lastname, email, username, passwd) values (1000, 'Iago', 'Hedderly', 'ihedderlyrr@upenn.edu', 'ihedderlyrr', '665nfsf');
-
--- MARK: SET SEQUENCE TO CURRENT MAX VALUE
-SELECT setval('user_account_id_seq', (SELECT max(id) FROM user_account));
