@@ -1,5 +1,6 @@
 const Pool = require("pg").Pool;
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
 
 const helpers = require("./helpers");
 
@@ -21,9 +22,10 @@ const pool = new Pool({
   port: RDB_PORT,
 });
 
-const getUsers = async (request, response) => {
+const getUsers = async (req, res, next) => {  
   const result = await pool.query("SELECT * FROM user_account ORDER BY id ASC");
-  response.status(200).json(result.rows);
+  throw new Error('Test error');
+  res.status(200).json(result.rows);
 };
 
 const getUserById = async (request, response) => {
@@ -42,9 +44,6 @@ const createUser = async (request, response) => {
     requestBody: request.body,
     requestFile: request.file,
   });
-
-  //prueba
-  return response.status(200).send("//prueba");
 
   if (!request?.file?.path) {
     return response.status(201).send({
@@ -75,7 +74,22 @@ const createUser = async (request, response) => {
     [firstname, lastname, email, username, passwordHash, avatarUrl]
   );
 
-  response.status(201).send(`User added with ID: ${results.rows[0].id}`);
+  const insertedId = results.rows[0].id;
+
+  const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
+
+  if (!fs.existsSync(userUploadDirectory)) {
+    fs.mkdirSync(userUploadDirectory, { recursive: true });
+  }  
+
+  const fullNewFilepath = `${userUploadDirectory}${request.file.filename}`;
+
+  fs.renameSync(
+    request.file.path,
+    fullNewFilepath
+  );
+
+  response.status(201).send(`User added with ID: ${insertedId}`);
 };
 
 const login = async (request, response) => {
