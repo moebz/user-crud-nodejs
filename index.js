@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const {
 	StatusCodes,
 } = require('http-status-codes');
-// const cors = require('cors');
 require("dotenv").config();
 const routes = require("./routes");
 const NotFoundError = require('./classes/NotFoundError');
@@ -12,7 +11,6 @@ const { getErrorHandler } = require('./helpers');
 const app = express();
 const port = 4000;
 
-// app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
