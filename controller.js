@@ -22,9 +22,9 @@ const pool = new Pool({
   port: RDB_PORT,
 });
 
-const getUsers = async (req, res, next) => {  
+const getUsers = async (req, res, next) => {
   const result = await pool.query("SELECT * FROM user_account ORDER BY id ASC");
-  throw new Error('Test error');
+  throw new Error("Test error");
   res.status(200).json(result.rows);
 };
 
@@ -45,13 +45,11 @@ const createUser = async (request, response) => {
     requestFile: request.file,
   });
 
-  if (!request?.file?.path) {
-    return response.status(201).send({
-      message: 'An error occurred while processing the request'
-    });
-  }
+  let avatarUrl = null;
 
-  const avatarUrl = request.file.path;
+  if (request?.file?.path) {
+    avatarUrl = request.file.path;
+  }
 
   const passwordHash = await helpers.hashPassword(passwd);
 
@@ -76,18 +74,19 @@ const createUser = async (request, response) => {
 
   const insertedId = results.rows[0].id;
 
-  const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
+  if (request?.file?.path) {
+    
 
-  if (!fs.existsSync(userUploadDirectory)) {
-    fs.mkdirSync(userUploadDirectory, { recursive: true });
-  }  
+    const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
 
-  const fullNewFilepath = `${userUploadDirectory}${request.file.filename}`;
+    if (!fs.existsSync(userUploadDirectory)) {
+      fs.mkdirSync(userUploadDirectory, { recursive: true });
+    }
 
-  fs.renameSync(
-    request.file.path,
-    fullNewFilepath
-  );
+    const fullNewFilepath = `${userUploadDirectory}${request.file.filename}`;
+
+    fs.renameSync(request.file.path, fullNewFilepath);
+  }
 
   response.status(201).send(`User added with ID: ${insertedId}`);
 };
