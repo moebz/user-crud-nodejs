@@ -8,16 +8,18 @@ const {
   RDB_USER,
   RDB_HOST,
   RDB_NAME,
+  TEST_RDB_NAME,
   RDB_PASSWORD,
   RDB_PORT,
   JWT_SECRET,
   JWT_EXPIRATION,
+  NODE_ENV,
 } = process.env;
 
 const pool = new Pool({
   user: RDB_USER,
   host: RDB_HOST,
-  database: RDB_NAME,
+  database: NODE_ENV === "test" ? TEST_RDB_NAME : RDB_NAME,
   password: RDB_PASSWORD,
   port: RDB_PORT,
 });
@@ -75,8 +77,6 @@ const createUser = async (request, response) => {
   const insertedId = results.rows[0].id;
 
   if (request?.file?.path) {
-    
-
     const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
 
     if (!fs.existsSync(userUploadDirectory)) {

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "PORT=6666 mocha ./tests/*-test.js --exit"
+    "test": "NODE_ENV=test PORT=6666 mocha ./tests/*-test.js --exit"
   },
   "repository": {
     "type": "git",
