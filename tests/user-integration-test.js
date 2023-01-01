@@ -15,7 +15,7 @@ const {
 describe("User route", function () {
   let app;
   let pool;
-  let authToken;
+  let userToken;
 
   before("Create a db connection and load app", async function () {
     pool = new Pool({
@@ -27,12 +27,6 @@ describe("User route", function () {
     });    
     app = require("./../index");
   });
-
-  // beforeEach("Insert fake data", async function () {
-  //   await pool.query(
-  //     "INSERT INTO user_account (username, passwd) VALUES ('admin', '$2b$10$axTwH7BuLDBOSeZ9WfDQ7u28FhBkdunR.Fql.bcJ8dVj./E8aY2Z2')"
-  //   );
-  // });
 
   beforeEach("Login to get auth token", async function () {
     const req = {
@@ -65,21 +59,6 @@ describe("User route", function () {
         username: req.username,
       });
     });
-
-    // it("Should fail if name already exists", async function () {
-    //   const req = {
-    //     name: "note1",
-    //     content: "content1",
-    //   };
-    //   await postNote(req);
-    //   await postNote(req, 400); // Second request should fail
-    // });
-
-    // it("Should fail if request is missing required params", async function () {
-    //   await postNote({ name: "note1" }, 400);
-    //   await postNote({ content: "content1" }, 400);
-    //   await postNote({}, 400);
-    // });
   });
 
   async function postUser(req) {
