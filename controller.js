@@ -26,7 +26,6 @@ const pool = new Pool({
 
 const getUsers = async (req, res, next) => {
   const result = await pool.query("SELECT * FROM user_account ORDER BY id ASC");
-  throw new Error("Test error");
   res.status(200).json(result.rows);
 };
 

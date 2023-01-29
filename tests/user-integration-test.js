@@ -1,30 +1,14 @@
 const { expect } = require("chai");
 const request = require("supertest");
-const Pool = require("pg-pool");
 
 require("dotenv").config();
-
-const {
-  RDB_USER,
-  RDB_HOST,
-  TEST_RDB_NAME,
-  RDB_PASSWORD,
-  RDB_PORT,
-} = process.env;
 
 describe("User route", function () {
   let app;
   let pool;
   let userToken;
 
-  before("Create a db connection and load app", async function () {
-    pool = new Pool({
-      user: RDB_USER,
-      host: RDB_HOST,
-      database: TEST_RDB_NAME,
-      password: RDB_PASSWORD,
-      port: RDB_PORT,
-    });    
+  before("Load app", async function () {
     app = require("./../index");
   });
 

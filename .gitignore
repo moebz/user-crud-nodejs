@@ -4,3 +4,4 @@ public/uploads
 tmp-uploads
 testDatabaseGeneration/logfile.txt
 testDatabaseGeneration/sqlfile.sql
+testDatabaseGeneration/generateTestingDatabase.sh
