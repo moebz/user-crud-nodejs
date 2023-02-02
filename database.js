@@ -18,6 +18,9 @@ const pool = new Pool({
   port: RDB_PORT,
 });
 
+// db object setup according
+// to recommendations in node-postgres docs
+// in https://node-postgres.com/guides/project-structure
 const db = {
   async query(text, params) {
     const start = Date.now();
