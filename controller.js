@@ -53,7 +53,7 @@ const createUser = async (request, response) => {
 
     const passwordHash = await helpers.hashPassword(passwd);
 
-    const results = await pool.query(
+    const results = await client.query(
       `INSERT INTO user_account (
       firstname,
       lastname,
