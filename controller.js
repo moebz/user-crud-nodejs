@@ -1,3 +1,4 @@
+const httpStatus = require("http-status");
 const { db } = require("./database");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
@@ -38,6 +39,17 @@ const createUser = async (request, response) => {
   const client = await db.getClient();
   try {
     const { firstname, lastname, email, username, passwd } = request.body;
+
+    if (
+      !username ||
+      typeof username !== "string" ||
+      !passwd ||
+      typeof passwd !== "string"
+    ) {
+      return response.status(httpStatus.BAD_REQUEST).send({
+        message: "Username and password are required",
+      });
+    }
 
     console.log({
       // request: request,
@@ -86,7 +98,9 @@ const createUser = async (request, response) => {
       fs.renameSync(request.file.path, fullNewFilepath);
     }
 
-    response.status(201).send(`User added with ID: ${insertedId}`);
+    response
+      .status(httpStatus.CREATED)
+      .send({ message: `User added with ID: ${insertedId}` });
   } catch (error) {
     throw error;
   } finally {

@@ -1,3 +1,4 @@
+const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
@@ -7,12 +8,11 @@ const { db } = require("../database.js");
 
 describe("UserController", function () {
   describe("createUser", function () {
-    it("should register a user", async function () {
+    it("Should register a user", async function () {
       // db client setup
       // TODO: can this be simplified?
 
       const fakeClient = {
-        connect: () => {},
         release: () => {},
         query: () => {},
       };
@@ -21,7 +21,7 @@ describe("UserController", function () {
 
       const client = await db.getClient();
 
-      const connectStub = sinon.stub(client, "connect").returns(fakeClient);
+      const releaseStub = sinon.spy(client, "release");
 
       // db data setup
 
@@ -68,20 +68,181 @@ describe("UserController", function () {
 
       await createUser(req, res);
 
+      console.log({ sendStub: sendStub.getCall(0).args });
+
       // expects
 
-      expect(connectStub.calledOnce);
-      expect(queryStub.calledOnce);
-      expect(statusStub.calledOnceWithExactly(201));
+      expect(queryStub.calledOnce).to.be.true;
+      expect(statusStub.calledOnceWithExactly(httpStatus.CREATED)).to.be.true;
       expect(
-        sendStub.calledOnceWithExactly(`User added with ID: ${insertedId}`)
-      );
+        sendStub.calledOnceWithExactly({
+          message: `User added with ID: ${insertedId}`,
+        })
+      ).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
 
       // clean up
 
       getClientStub.restore();
-      connectStub.restore();
       queryStub.restore();
+    });
+
+    it("Should not register a user when username is not provided", async function () {
+      // db client setup
+      // TODO: can this be simplified?
+
+      const fakeClient = {
+        release: () => {},
+        query: () => {},
+      };
+
+      const getClientStub = sinon.stub(db, "getClient").returns(fakeClient);
+
+      const client = await db.getClient();
+
+      const releaseStub = sinon.spy(client, "release");
+
+      // db data setup
+
+      const mockUser = {
+        firstname: "testIago",
+        lastname: "testHedderly",
+        email: "testihedderlyrr@upenn.edu",
+        passwd: "test665nfsf",
+      };
+
+      const insertedId = 1000;
+
+      const mockDbRows = [
+        {
+          id: insertedId,
+        },
+      ];
+
+      const mockQueryResult = {
+        rows: mockDbRows,
+      };
+
+      const queryStub = sinon.stub(client, "query").returns(mockQueryResult);
+
+      // request setup
+
+      const req = {
+        body: mockUser,
+      };
+
+      // response setup
+
+      const res = {
+        status: function () {},
+        send: function () {},
+      };
+
+      const statusStub = sinon.stub(res, "status").returns(res);
+
+      const sendStub = sinon.spy(res, "send");
+
+      // call to createUser
+
+      await createUser(req, res);
+
+      console.log({ queryStubCalls: queryStub.getCalls() });
+
+      // expects
+
+      expect(queryStub.notCalled).to.be.true;
+      expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
+        .true;
+      expect(
+        sendStub.calledOnceWithExactly({
+          message: "Username and password are required",
+        })
+      ).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
+
+      // clean up
+
+      getClientStub.restore();
+      queryStub.restore();
+      releaseStub.restore();
+    });
+
+    it("Should not register a user when password is not provided", async function () {
+      // db client setup
+      // TODO: can this be simplified?
+
+      const fakeClient = {
+        release: () => {},
+        query: () => {},
+      };
+
+      const getClientStub = sinon.stub(db, "getClient").returns(fakeClient);
+
+      const client = await db.getClient();
+
+      const releaseStub = sinon.spy(client, "release");
+
+      // db data setup
+
+      const mockUser = {
+        firstname: "testIago",
+        lastname: "testHedderly",
+        email: "testihedderlyrr@upenn.edu",
+        username: "testihedderlyrr",
+      };
+
+      const insertedId = 1000;
+
+      const mockDbRows = [
+        {
+          id: insertedId,
+        },
+      ];
+
+      const mockQueryResult = {
+        rows: mockDbRows,
+      };
+
+      const queryStub = sinon.stub(client, "query").returns(mockQueryResult);
+
+      // request setup
+
+      const req = {
+        body: mockUser,
+      };
+
+      // response setup
+
+      const res = {
+        status: function () {},
+        send: function () {},
+      };
+
+      const statusStub = sinon.stub(res, "status").returns(res);
+
+      const sendStub = sinon.spy(res, "send");
+
+      // call to createUser
+
+      await createUser(req, res);
+
+      // expects
+
+      expect(queryStub.notCalled).to.be.true;
+      expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
+        .true;
+      expect(
+        sendStub.calledOnceWithExactly({
+          message: "Username and password are required",
+        })
+      ).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
+
+      // clean up
+
+      getClientStub.restore();
+      queryStub.restore();
+      releaseStub.restore();
     });
   });
 
@@ -91,7 +252,6 @@ describe("UserController", function () {
       // TODO: can this be simplified?
 
       const fakeClient = {
-        connect: () => {},
         release: () => {},
         query: () => {},
       };
@@ -100,7 +260,7 @@ describe("UserController", function () {
 
       const client = await db.getClient();
 
-      const connectStub = sinon.stub(client, "connect").returns(fakeClient);
+      const releaseStub = sinon.spy(client, "release");
 
       // user data setup
 
@@ -144,24 +304,24 @@ describe("UserController", function () {
 
       // expects
 
-      expect(connectStub.calledOnce);
-      expect(queryStub.calledOnce);
-      expect(statusStub.calledOnceWithExactly(200));
+      expect(queryStub.calledOnce).to.be.true;
+      expect(statusStub.calledOnceWithExactly(200)).to.be.true;
       expect(
         jsonStub.calledOnceWithExactly({
           data: mockDbRows,
           code: null,
           message: null,
         })
-      );
+      ).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
 
       // clean up
 
       getClientStub.restore();
-      connectStub.restore();
       queryStub.restore();
       statusStub.restore();
       jsonStub.restore();
+      releaseStub.restore();
     });
   });
 });
