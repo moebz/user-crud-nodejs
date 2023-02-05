@@ -3,8 +3,9 @@ const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
 const { faker } = require("@faker-js/faker");
-const { getUserById, createUser } = require("../controller.js");
-const { db } = require("../database.js");
+const { getUserById, createUser } = require("../controller");
+const { db } = require("../database");
+const helpers = require("../helpers");
 
 describe("UserController", function () {
   describe("createUser", function () {
@@ -47,6 +48,10 @@ describe("UserController", function () {
 
       const queryStub = sinon.stub(client, "query").returns(mockQueryResult);
 
+      // password hash spy
+
+      const hashPasswordStub = sinon.spy(helpers, "hashPassword");
+
       // request setup
 
       const req = {
@@ -72,6 +77,7 @@ describe("UserController", function () {
 
       // expects
 
+      expect(hashPasswordStub.calledOnceWithExactly(mockUser.passwd)).to.be.true;
       expect(queryStub.calledOnce).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.CREATED)).to.be.true;
       expect(
