@@ -60,6 +60,7 @@ const createUser = async (request, response) => {
     let avatarUrl = null;
 
     if (request?.file?.path) {
+      console.log("there is a file in the request");
       avatarUrl = request.file.path;
     }
 
@@ -113,19 +114,23 @@ const login = async (request, response) => {
   try {
     const { username, passwd } = request.body;
 
+    console.log({ username, passwd });
+
     const errorMessage = `Username or password not valid`;
     const httpErrorStatus = 400;
 
-    const result = await pool.query(
+    const result = await client.query(
       "SELECT * FROM user_account WHERE username = $1",
       [username]
     );
+
+    console.log({ result });
 
     const user = result?.rows?.[0];
 
     if (!user) {
       return response.status(httpErrorStatus).send({
-        message: errorMessage,
+        message: errorMessage + "1",
       });
     }
 
@@ -133,7 +138,7 @@ const login = async (request, response) => {
 
     if (!loginResult) {
       return response.status(httpErrorStatus).send({
-        message: errorMessage,
+        message: errorMessage + "2",
       });
     }
 
@@ -142,14 +147,14 @@ const login = async (request, response) => {
     };
 
     const tokenOptions = {
-      expiresIn: JWT_EXPIRATION,
+      expiresIn: process.env.JWT_EXPIRATION,
     };
 
     console.log({
       tokenOptions,
     });
 
-    const token = jwt.sign(tokenPayload, JWT_SECRET, tokenOptions);
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, tokenOptions);
 
     return response.status(200).send({
       data: {
@@ -169,7 +174,7 @@ const updateUser = async (request, response) => {
     const id = parseInt(request.params.id);
     const { firstname, lastname, email, username } = request.body;
 
-    await pool.query(
+    await client.query(
       `UPDATE user_account SET
       firstname = $1,
       lastname = $2,
@@ -193,7 +198,7 @@ const deleteUser = async (request, response) => {
   try {
     const id = parseInt(request.params.id);
 
-    await pool.query("DELETE FROM user_account WHERE id = $1", [id]);
+    await client.query("DELETE FROM user_account WHERE id = $1", [id]);
 
     response.status(200).send(`User deleted with ID: ${id}`);
   } catch (error) {

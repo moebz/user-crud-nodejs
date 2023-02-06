@@ -2,9 +2,14 @@ const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
+const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-const { getUserById, createUser } = require("../controller");
+
+require("dotenv").config();
+console.log({nodeEnv: process.env.NODE_ENV});
 const { db } = require("../database");
+const app = require("../index");
+const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
 describe("UserController", function () {
@@ -206,6 +211,47 @@ describe("UserController", function () {
         })
       ).to.be.true;
       expect(releaseStub.calledOnce).to.be.true;
+    });
+
+    it("Should not register a user that is sending more than one image", async function () {
+
+      const req = {
+        username: "sadfasfd",
+        passwd: "123456",
+      };
+
+      const { body } = await request(app).post("/login").send(req);
+
+      console.log("body", body);
+      
+      const userToken = body.data.userToken;
+
+      const mockUser = {
+        firstname: "testIago",
+        lastname: "testHedderly",
+        email: "testihedderlyrr@upenn.edu",
+        username: "testihedderlyrr",
+        passwd: "test665nfsf",
+      };
+
+      const res = await request(app)
+        .post("/users")
+        .set("Accept", "application/json; charset=utf-8")
+        .set(
+          "user-token",
+          userToken
+        )
+        .field("Content-Type", "multipart/form-data")
+        .field("firstname", mockUser.firstname)
+        .field("lastname", mockUser.lastname)
+        .field("email", mockUser.email)
+        .field("username", mockUser.username)
+        .field("passwd", mockUser.passwd)
+        .attach("avatar", "tests/files/cat.png")
+        .attach("avatar2", "tests/files/cat.png");
+
+      console.log({ res });
+      expect(res.status).to.equal(httpStatus.BAD_REQUEST);
     });
   });
 

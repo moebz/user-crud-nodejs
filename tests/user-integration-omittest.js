@@ -1,21 +1,31 @@
 const { expect } = require("chai");
 const request = require("supertest");
 
+// The database file can only read
+// the env variables
+// if before requiring it,
+// we require dotenv
+// and config() it.
 require("dotenv").config();
+
+// Put this always after
+// requiring dotenv.
+const { db } = require("../database");
 
 describe("User route", function () {
   let app;
-  let pool;
+  let client;
   let userToken;
 
   before("Load app", async function () {
-    app = require("./../index");
+    app = require("../index");
+    client = await db.getClient();
   });
 
   beforeEach("Login to get auth token", async function () {
     const req = {
-      username: "elsalvador",
-      passwd: "paiscrypto",
+      username: "sadfasfd",
+      passwd: "123456",
     };
     const { body } = await request(app).post("/login").send(req);
     console.log('body', body);
@@ -32,7 +42,7 @@ describe("User route", function () {
       };
       await postUser(req);
 
-      const { rows } = await pool.query(
+      const { rows } = await client.query(
         "SELECT username FROM user_account WHERE username = $1",
         [req.username]
       );

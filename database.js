@@ -10,13 +10,17 @@ const {
   NODE_ENV,
 } = process.env;
 
-const pool = new Pool({
+const databaseConfig = {
   user: RDB_USER,
   host: RDB_HOST,
   database: NODE_ENV === "test" ? TEST_RDB_NAME : RDB_NAME,
   password: RDB_PASSWORD,
   port: RDB_PORT,
-});
+};
+
+console.log({ databaseConfig });
+
+const pool = new Pool(databaseConfig);
 
 // db object setup according
 // to recommendations in node-postgres docs
