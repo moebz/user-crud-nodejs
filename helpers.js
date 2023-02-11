@@ -19,6 +19,9 @@ const wrapMidd = (fn) => (req, res, next) => {
 
 const getErrorHandler = () => {
   return async (err, req, res, next) => {
+
+    console.log('mainErrorHandler.err', err);
+
     // If it is an instance of 'ApiError'
     // it could contain statusCode.
     const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

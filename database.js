@@ -18,6 +18,8 @@ const databaseConfig = {
   port: RDB_PORT,
 };
 
+// console.log = function () {};
+
 console.log({ databaseConfig });
 
 const pool = new Pool(databaseConfig);

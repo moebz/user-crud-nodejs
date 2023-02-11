@@ -5,6 +5,8 @@ const fs = require("fs");
 
 const helpers = require("./helpers");
 
+// console.log = function () {};
+
 const getUsers = async (req, res, next) => {
   const client = await db.getClient();
   try {

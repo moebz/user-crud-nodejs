@@ -4,6 +4,8 @@ const path = require("path");
 const fs = require("fs");
 const httpStatus = require("http-status");
 
+// console.log = function () {};
+
 const { JWT_SECRET, JWT_EXPIRATION } = process.env;
 
 const verifyUserToken = async (request, response, next) => {
@@ -62,15 +64,17 @@ const multerInstance = multer({
 });
 
 const fileUploadHandler = (req, res, next) => {
+
   const fileUploadMiddleware = multerInstance.single("avatar");
 
   fileUploadMiddleware(req, res, (err) => {
+    // console.log('fileUploadMiddleware.err', err);
     if (err instanceof multer.MulterError && err?.code === "LIMIT_FILE_SIZE") {
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "Uploaded file size should be less than 2 MB",
       });
     } else if (err) {
-      console.log(err);
+      // console.log('fileUploadHandler.err', err);
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "An unknown error occurred",
       });

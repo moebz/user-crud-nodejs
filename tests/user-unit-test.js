@@ -1,18 +1,20 @@
+const proxyquire = require("proxyquire").noCallThru();
 const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
 const request = require("supertest");
+const multer = require("multer");
+const multerError = new multer.MulterError("LIMIT_UNEXPECTED_FILE");
 const { faker } = require("@faker-js/faker");
-
 require("dotenv").config();
-console.log({nodeEnv: process.env.NODE_ENV});
+console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
 const app = require("../index");
 const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
-describe("UserController", function () {
+describe("Unit: UserController", function () {
   describe("createUser", function () {
     let fakeClient,
       getClientStub,
@@ -117,14 +119,52 @@ describe("UserController", function () {
       expect(releaseStub.calledOnce).to.be.true;
     });
 
-    it("Should not register a user when username is not provided", async function () {
+    it("Should not register a user that is sending more than one image", async function () {
+      const req = {
+        files: [
+          {
+            originalname: "sample.name",
+            mimetype: "sample.type",
+            path: "sample.url",
+            buffer: Buffer.from("whatever"),
+          },
+          {
+            originalname: "sample.name",
+            mimetype: "sample.type",
+            path: "sample.url",
+            buffer: Buffer.from("whatever"),
+          },
+        ],
+      };
+
+      const res = {
+        status: sinon.stub().returnsThis(),
+        send: sinon.spy(),
+      };
+
+      const next = sinon.spy();
+
+      const { fileUploadHandler } = proxyquire("../middleware", {
+        multer: require("./mocks/multerMockForUnexpectedFile"),
+      });
+
+      fileUploadHandler(req, res, next);
+
+      expect(res.status.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
+        .true;
+      expect(
+        res.send.calledOnceWithExactly({ message: "An unknown error occurred" })
+      ).to.be.true;
+    });
+
+    it("Should not register a user when password is not provided", async function () {
       // db data setup
 
       const mockUser = {
         firstname: "testIago",
         lastname: "testHedderly",
         email: "testihedderlyrr@upenn.edu",
-        passwd: "test665nfsf",
+        username: "testihedderlyrr",
       };
 
       const insertedId = 1000;
@@ -150,8 +190,6 @@ describe("UserController", function () {
       // call to createUser
 
       await createUser(req, res);
-
-      console.log({ queryStubCalls: queryStub.getCalls() });
 
       // expects
 
@@ -211,47 +249,6 @@ describe("UserController", function () {
         })
       ).to.be.true;
       expect(releaseStub.calledOnce).to.be.true;
-    });
-
-    it("Should not register a user that is sending more than one image", async function () {
-
-      const req = {
-        username: "sadfasfd",
-        passwd: "123456",
-      };
-
-      const { body } = await request(app).post("/login").send(req);
-
-      console.log("body", body);
-      
-      const userToken = body.data.userToken;
-
-      const mockUser = {
-        firstname: "testIago",
-        lastname: "testHedderly",
-        email: "testihedderlyrr@upenn.edu",
-        username: "testihedderlyrr",
-        passwd: "test665nfsf",
-      };
-
-      const res = await request(app)
-        .post("/users")
-        .set("Accept", "application/json; charset=utf-8")
-        .set(
-          "user-token",
-          userToken
-        )
-        .field("Content-Type", "multipart/form-data")
-        .field("firstname", mockUser.firstname)
-        .field("lastname", mockUser.lastname)
-        .field("email", mockUser.email)
-        .field("username", mockUser.username)
-        .field("passwd", mockUser.passwd)
-        .attach("avatar", "tests/files/cat.png")
-        .attach("avatar2", "tests/files/cat.png");
-
-      console.log({ res });
-      expect(res.status).to.equal(httpStatus.BAD_REQUEST);
     });
   });
 
