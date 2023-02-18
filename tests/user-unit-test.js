@@ -3,14 +3,9 @@ const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
-const request = require("supertest");
-const multer = require("multer");
-const multerError = new multer.MulterError("LIMIT_UNEXPECTED_FILE");
-const { faker } = require("@faker-js/faker");
 require("dotenv").config();
 console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
-const app = require("../index");
 const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
@@ -155,53 +150,6 @@ describe("Unit: UserController", function () {
       expect(
         res.send.calledOnceWithExactly({ message: "An unknown error occurred" })
       ).to.be.true;
-    });
-
-    it("Should not register a user when password is not provided", async function () {
-      // db data setup
-
-      const mockUser = {
-        firstname: "testIago",
-        lastname: "testHedderly",
-        email: "testihedderlyrr@upenn.edu",
-        username: "testihedderlyrr",
-      };
-
-      const insertedId = 1000;
-
-      const mockDbRows = [
-        {
-          id: insertedId,
-        },
-      ];
-
-      const mockQueryResult = {
-        rows: mockDbRows,
-      };
-
-      queryStub = sinon.stub(client, "query").returns(mockQueryResult);
-
-      // request setup
-
-      const req = {
-        body: mockUser,
-      };
-
-      // call to createUser
-
-      await createUser(req, res);
-
-      // expects
-
-      expect(queryStub.notCalled).to.be.true;
-      expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
-        .true;
-      expect(
-        sendStub.calledOnceWithExactly({
-          message: "Username and password are required",
-        })
-      ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
     });
 
     it("Should not register a user when password is not provided", async function () {
