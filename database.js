@@ -1,5 +1,8 @@
 const { Pool } = require("pg");
 
+// In case it wasn't called outside
+require("dotenv").config();
+
 const {
   RDB_USER,
   RDB_HOST,
@@ -10,6 +13,25 @@ const {
   NODE_ENV,
 } = process.env;
 
+if (
+  !Boolean(RDB_USER) ||
+  !Boolean(RDB_HOST) ||
+  !Boolean(RDB_NAME) ||
+  !Boolean(TEST_RDB_NAME) ||
+  !Boolean(RDB_PASSWORD) ||
+  !Boolean(RDB_PORT)
+) {
+  // "pg" will use default values if
+  // it doesn't receive RDB_NAME
+  // and other values, and that
+  // could result in using the
+  // wrong database.
+  throw new Error("Environment variables not set. Is the .env file present? Was dotenv required and config()-ed?");
+}
+
+// NODE_ENV should be "test"
+// when executing tests.
+
 const databaseConfig = {
   user: RDB_USER,
   host: RDB_HOST,
@@ -17,10 +39,6 @@ const databaseConfig = {
   password: RDB_PASSWORD,
   port: RDB_PORT,
 };
-
-// console.log = function () {};
-
-// console.log({ databaseConfig });
 
 const pool = new Pool(databaseConfig);
 

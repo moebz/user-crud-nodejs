@@ -4,15 +4,16 @@ const httpStatus = require("http-status");
 
 // console.log = function () {};
 
-// The database file can only read
-// the env variables
-// if before requiring it,
-// we require dotenv
-// and config() it.
 require("dotenv").config();
 
-// Put this always after
-// requiring dotenv.
+const { NODE_ENV } = process.env;
+
+if (NODE_ENV !== "test") {
+  throw new Error(
+    "Aborting. NODE_ENV isn't 'test'. Code may point to the wrong database. Was dotenv required and config()-ed? Does  package.json have a test script that sets NODE_ENV to 'test'?"
+  );
+}
+
 const { db } = require("../database");
 
 describe("Integration: UserController", function () {
@@ -129,7 +130,7 @@ describe("Integration: UserController", function () {
         .attach("avatar", "tests/files/cat.png");
 
       expect(res.status).to.equal(httpStatus.CREATED);
-    });    
+    });
   });
 
   async function postUser(req) {
