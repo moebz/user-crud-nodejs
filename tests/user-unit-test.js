@@ -292,7 +292,6 @@ describe("Unit: UserController", function () {
       expect(
         jsonStub.calledOnceWithExactly({
           data: mockDbRows,
-          code: null,
           message: null,
         })
       ).to.be.true;

@@ -20,7 +20,7 @@ const databaseConfig = {
 
 // console.log = function () {};
 
-console.log({ databaseConfig });
+// console.log({ databaseConfig });
 
 const pool = new Pool(databaseConfig);
 

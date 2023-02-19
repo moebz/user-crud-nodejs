@@ -31,7 +31,7 @@ describe("Integration: UserController", function () {
       passwd: "123456",
     };
     const { body } = await request(app).post("/login").send(req);
-    console.log("body", body);
+    // console.log("body", body);
     userToken = body.data.userToken;
   });
 
@@ -65,7 +65,7 @@ describe("Integration: UserController", function () {
 
       const { body } = await request(app).post("/login").send(req);
 
-      console.log("body", body);
+      // console.log("body", body);
 
       const userToken = body.data.userToken;
 
@@ -101,7 +101,7 @@ describe("Integration: UserController", function () {
 
       const { body } = await request(app).post("/login").send(req);
 
-      console.log("body", body);
+      // console.log("body", body);
 
       const userToken = body.data.userToken;
 

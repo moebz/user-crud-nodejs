@@ -13,7 +13,7 @@ const getUsers = async (req, res, next) => {
     const result = await client.query(
       "SELECT * FROM user_account ORDER BY id ASC"
     );
-    res.status(200).json(result.rows);
+    res.status(httpStatus.OK).json(result.rows);
   } catch (error) {
     throw error;
   } finally {
@@ -29,9 +29,7 @@ const getUserById = async (request, response) => {
       "SELECT * FROM user_account WHERE id = $1",
       [id]
     );
-    response
-      .status(httpStatus.OK)
-      .json({ data: result.rows, code: null, message: null });
+    response.status(httpStatus.OK).json({ data: result.rows, message: null });
   } catch (error) {
     throw error;
   } finally {
@@ -55,16 +53,16 @@ const createUser = async (request, response) => {
       });
     }
 
-    console.log({
-      // request: request,
-      requestBody: request.body,
-      requestFile: request.file,
-    });
+    // console.log({
+    //   // request: request,
+    //   requestBody: request.body,
+    //   requestFile: request.file,
+    // });
 
     let avatarUrl = null;
 
     if (request?.file?.path) {
-      console.log("there is a file in the request");
+      // console.log("there is a file in the request");
       avatarUrl = request.file.path;
     }
 
@@ -118,22 +116,21 @@ const login = async (request, response) => {
   try {
     const { username, passwd } = request.body;
 
-    console.log({ username, passwd });
+    // console.log({ username, passwd });
 
     const errorMessage = `Username or password not valid`;
-    const httpErrorStatus = 400;
 
     const result = await client.query(
       "SELECT * FROM user_account WHERE username = $1",
       [username]
     );
 
-    console.log({ result });
+    // console.log({ result });
 
     const user = result?.rows?.[0];
 
     if (!user) {
-      return response.status(httpErrorStatus).send({
+      return response.status(httpStatus.BAD_REQUEST).send({
         message: errorMessage + "1",
       });
     }
@@ -141,7 +138,7 @@ const login = async (request, response) => {
     const loginResult = await helpers.comparePasswords(passwd, user.passwd);
 
     if (!loginResult) {
-      return response.status(httpErrorStatus).send({
+      return response.status(httpStatus.BAD_REQUEST).send({
         message: errorMessage + "2",
       });
     }
@@ -154,13 +151,13 @@ const login = async (request, response) => {
       expiresIn: process.env.JWT_EXPIRATION,
     };
 
-    console.log({
-      tokenOptions,
-    });
+    // console.log({
+    //   tokenOptions,
+    // });
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, tokenOptions);
 
-    return response.status(200).send({
+    return response.status(httpStatus.OK).send({
       data: {
         userToken: token,
       },
@@ -189,7 +186,7 @@ const updateUser = async (request, response) => {
       [firstname, lastname, email, username, id]
     );
 
-    response.status(200).send(`User modified with ID: ${id}`);
+    response.status(httpStatus.OK).send(`User modified with ID: ${id}`);
   } catch (error) {
     throw error;
   } finally {
@@ -204,7 +201,7 @@ const deleteUser = async (request, response) => {
 
     await client.query("DELETE FROM user_account WHERE id = $1", [id]);
 
-    response.status(200).send(`User deleted with ID: ${id}`);
+    response.status(httpStatus.OK).send(`User deleted with ID: ${id}`);
   } catch (error) {
     throw error;
   } finally {
