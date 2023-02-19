@@ -11,8 +11,7 @@ const helpers = require("../helpers");
 
 describe("Unit: UserController", function () {
   describe("createUser", function () {
-    let fakeClient,
-      getClientStub,
+    let getClientStub,
       client,
       releaseStub,
       queryStub,
@@ -25,16 +24,16 @@ describe("Unit: UserController", function () {
       // db client setup
       // TODO: can this be simplified?
 
-      fakeClient = {
+      client = {
         release: () => {},
         query: () => {},
       };
 
-      getClientStub = sinon.stub(db, "getClient").returns(fakeClient);
-
-      client = await db.getClient();
+      getClientStub = sinon.stub(db, "getClient");
 
       releaseStub = sinon.spy(client, "release");
+
+      getClientStub.returns(client);
 
       // response setup
 
@@ -102,6 +101,7 @@ describe("Unit: UserController", function () {
 
       // expects
 
+      expect(getClientStub.calledOnce).to.be.true;
       expect(hashPasswordStub.calledOnceWithExactly(mockUser.passwd)).to.be
         .true;
       expect(queryStub.calledOnce).to.be.true;
@@ -188,6 +188,7 @@ describe("Unit: UserController", function () {
 
       // expects
 
+      expect(getClientStub.calledOnce).to.be.true;
       expect(queryStub.notCalled).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
         .true;
@@ -201,8 +202,7 @@ describe("Unit: UserController", function () {
   });
 
   describe("getUserById", function () {
-    let fakeClient,
-      getClientStub,
+    let getClientStub,
       client,
       releaseStub,
       queryStub,
@@ -215,16 +215,18 @@ describe("Unit: UserController", function () {
       // db client setup
       // TODO: can this be simplified?
 
-      fakeClient = {
+      client = {
         release: () => {},
         query: () => {},
       };
 
-      getClientStub = sinon.stub(db, "getClient").returns(fakeClient);
-
-      client = await db.getClient();
+      getClientStub = sinon.stub(db, "getClient");
 
       releaseStub = sinon.spy(client, "release");
+
+      getClientStub.returns(client);
+
+      // client = await db.getClient();
 
       // response setup
 
@@ -284,6 +286,7 @@ describe("Unit: UserController", function () {
 
       // expects
 
+      expect(getClientStub.calledOnce).to.be.true;
       expect(queryStub.calledOnce).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.OK)).to.be.true;
       expect(

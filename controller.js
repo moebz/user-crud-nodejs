@@ -29,7 +29,9 @@ const getUserById = async (request, response) => {
       "SELECT * FROM user_account WHERE id = $1",
       [id]
     );
-    response.status(200).json({ data: result.rows, code: null, message: null });
+    response
+      .status(httpStatus.OK)
+      .json({ data: result.rows, code: null, message: null });
   } catch (error) {
     throw error;
   } finally {
