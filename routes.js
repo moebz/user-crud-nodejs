@@ -10,21 +10,32 @@ router.get("/ping", (req, res) => {
   return res.send("ping response");
 });
 
-router.get("/users", wrapMidd(controller.getUsers));
-router.get("/users/:id", wrapMidd(controller.getUserById));
+router.get("/users", middleware.getDbClient, wrapMidd(controller.getUsers));
+router.get(
+  "/users/:id",
+  middleware.getDbClient,
+  wrapMidd(controller.getUserById)
+);
 router.post(
   "/users",
   middleware.verifyUserToken,
+  middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler),
   wrapMidd(controller.createUser)
 );
-router.post("/login", wrapMidd(controller.login));
+router.post("/login", middleware.getDbClient, wrapMidd(controller.login));
 router.put(
   "/users/:id",
   middleware.verifyUserToken,
+  middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler),
   wrapMidd(controller.updateUser)
 );
-router.delete("/users/:id", middleware.verifyUserToken, wrapMidd(controller.deleteUser));
+router.delete(
+  "/users/:id",
+  middleware.verifyUserToken,
+  middleware.getDbClient,
+  wrapMidd(controller.deleteUser)
+);
 
 module.exports = router;

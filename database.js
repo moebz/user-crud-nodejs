@@ -26,7 +26,9 @@ if (
   // and other values, and that
   // could result in using the
   // wrong database.
-  throw new Error("Environment variables not set. Is the .env file present? Was dotenv required and config()-ed?");
+  throw new Error(
+    "Environment variables not set. Is the .env file present? Was dotenv required and config()-ed?"
+  );
 }
 
 // NODE_ENV should be "test"
@@ -39,6 +41,8 @@ const databaseConfig = {
   password: RDB_PASSWORD,
   port: RDB_PORT,
 };
+
+console.log({ databaseConfig });
 
 const pool = new Pool(databaseConfig);
 

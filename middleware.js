@@ -4,6 +4,9 @@ const path = require("path");
 const fs = require("fs");
 const httpStatus = require("http-status");
 
+require("dotenv").config();
+const { db } = require("./database");
+
 // console.log = function () {};
 
 const { JWT_SECRET, JWT_EXPIRATION } = process.env;
@@ -65,9 +68,14 @@ const multerInstance = multer({
 
 const fileUploadHandler = (req, res, next) => {
 
+  console.log({'fileUploadHandler.req': Object.getOwnPropertyNames(req)});
+
   const fileUploadMiddleware = multerInstance.single("avatar");
 
   fileUploadMiddleware(req, res, (err) => {
+
+    console.log({'fileUploadMiddleware.req': Object.getOwnPropertyNames(req)});
+
     // console.log('fileUploadMiddleware.err', err);
     if (err instanceof multer.MulterError && err?.code === "LIMIT_FILE_SIZE") {
       return res.status(httpStatus.BAD_REQUEST).send({
@@ -83,7 +91,14 @@ const fileUploadHandler = (req, res, next) => {
   });
 };
 
+const getDbClient = async (req, res, next) => {
+  const client = await db.getClient();
+  req.dbClient = client;
+  next();
+};
+
 module.exports = {
   verifyUserToken,
   fileUploadHandler,
+  getDbClient,
 };

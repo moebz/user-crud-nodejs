@@ -15,6 +15,7 @@ if (NODE_ENV !== "test") {
 }
 
 const { db } = require("../database");
+const { getDbClient } = require('../middleware');
 
 describe("Integration: UserController", function () {
   let app;
@@ -28,11 +29,11 @@ describe("Integration: UserController", function () {
 
   beforeEach("Login to get auth token", async function () {
     const req = {
-      username: "sadfasfd",
+      username: "nomullen5",
       passwd: "123456",
     };
     const { body } = await request(app).post("/login").send(req);
-    // console.log("body", body);
+    console.log("body", body);
     userToken = body.data.userToken;
   });
 
@@ -41,26 +42,28 @@ describe("Integration: UserController", function () {
       const uniqueUsername = `user${Date.now()}`;
 
       const req = {
+        firstname: 'integration test user 1',
         username: uniqueUsername,
         passwd: "123456",
       };
       await postUser(req);
 
       const { rows } = await client.query(
-        "SELECT username FROM user_account WHERE username = $1",
+        "SELECT firstname, username FROM user_account WHERE username = $1",
         [req.username]
       );
 
       expect(rows).lengthOf(1);
 
       expect(rows[0]).to.deep.equal({
+        firstname: req.firstname,
         username: req.username,
       });
     });
 
     it("Should not register a user that is sending more than one image", async function () {
       const req = {
-        username: "sadfasfd",
+        username: "nomullen5",
         passwd: "123456",
       };
 
@@ -71,7 +74,7 @@ describe("Integration: UserController", function () {
       const userToken = body.data.userToken;
 
       const mockUser = {
-        firstname: "testIago",
+        firstname: "integrationtestIago",
         lastname: "testHedderly",
         email: "testihedderlyrr@upenn.edu",
         username: "testihedderlyrr",
@@ -96,7 +99,7 @@ describe("Integration: UserController", function () {
 
     it("Should register a user that is sending one image", async function () {
       const req = {
-        username: "sadfasfd",
+        username: "nomullen5",
         passwd: "123456",
       };
 
@@ -110,7 +113,7 @@ describe("Integration: UserController", function () {
       const uniqueEmail = `testihedderlyrr${Date.now()}@upenn.edu`;
 
       const mockUser = {
-        firstname: "testIago",
+        firstname: "integrationtestIago",
         lastname: "testHedderly",
         email: uniqueEmail,
         username: uniqueUsername,

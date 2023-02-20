@@ -6,6 +6,7 @@ const expect = chai.expect;
 require("dotenv").config();
 console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
+const { getDbClient } = require("../middleware");
 const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
@@ -62,11 +63,11 @@ describe("Unit: UserController", function () {
       // db data setup
 
       const mockUser = {
-        firstname: "testIago",
-        lastname: "testHedderly",
-        email: "testihedderlyrr@upenn.edu",
-        username: "testihedderlyrr",
-        passwd: "test665nfsf",
+        firstname: "unittestIago",
+        lastname: "unittestHedderly",
+        email: "unittestihedderlyrr@upenn.edu",
+        username: "unittestihedderlyrr",
+        passwd: "unittest665nfsf",
       };
 
       const insertedId = 1000;
@@ -91,6 +92,7 @@ describe("Unit: UserController", function () {
 
       const req = {
         body: mockUser,
+        dbClient: client,
       };
 
       // call to createUser
@@ -101,7 +103,6 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      expect(getClientStub.calledOnce).to.be.true;
       expect(hashPasswordStub.calledOnceWithExactly(mockUser.passwd)).to.be
         .true;
       expect(queryStub.calledOnce).to.be.true;
@@ -111,7 +112,6 @@ describe("Unit: UserController", function () {
           message: `User added with ID: ${insertedId}`,
         })
       ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
     });
 
     it("Should not register a user that is sending more than one image", async function () {
@@ -156,10 +156,10 @@ describe("Unit: UserController", function () {
       // db data setup
 
       const mockUser = {
-        firstname: "testIago",
-        lastname: "testHedderly",
-        email: "testihedderlyrr@upenn.edu",
-        username: "testihedderlyrr",
+        firstname: "unittestIago",
+        lastname: "unittestHedderly",
+        email: "unittestihedderlyrr@upenn.edu",
+        username: "unittestihedderlyrr",
       };
 
       const insertedId = 1000;
@@ -188,7 +188,7 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      expect(getClientStub.calledOnce).to.be.true;
+      // expect(getClientStub.calledOnce).to.be.true;
       expect(queryStub.notCalled).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
         .true;
@@ -197,7 +197,7 @@ describe("Unit: UserController", function () {
           message: "Username and password are required",
         })
       ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
+      // expect(releaseStub.calledOnce).to.be.true;
     });
   });
 
@@ -257,11 +257,11 @@ describe("Unit: UserController", function () {
       const idToSearch = 1000;
       const mockUser = {
         id: idToSearch,
-        firstname: "testIago",
-        lastname: "testHedderly",
-        email: "testihedderlyrr@upenn.edu",
-        username: "testihedderlyrr",
-        passwd: "test665nfsf",
+        firstname: "unittestIago",
+        lastname: "unittestHedderly",
+        email: "unittestihedderlyrr@upenn.edu",
+        username: "unittestihedderlyrr",
+        passwd: "unittest665nfsf",
         avatar_url: null,
       };
       const mockDbRows = [mockUser];
@@ -278,6 +278,7 @@ describe("Unit: UserController", function () {
         params: {
           id: idToSearch,
         },
+        dbClient: client,
       };
 
       // get user call
@@ -286,7 +287,7 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      expect(getClientStub.calledOnce).to.be.true;
+      // expect(getClientStub.calledOnce).to.be.true;
       expect(queryStub.calledOnce).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.OK)).to.be.true;
       expect(
@@ -295,7 +296,7 @@ describe("Unit: UserController", function () {
           message: null,
         })
       ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
+      // expect(releaseStub.calledOnce).to.be.true;
     });
   });
 });

@@ -1,26 +1,35 @@
-const bcrypt = require('bcrypt');
-const {
-	StatusCodes,
-} = require('http-status-codes');
+const bcrypt = require("bcrypt");
+const { StatusCodes } = require("http-status-codes");
 
 /**
  * It receives an express middleware, wraps it in a "try-catch" and returns it
- * to be executed by express.
- * If the middleware throws an error, sends it to the next middleware
+ * to be executed by express. It does two things:
+ * 1- If the middleware throws an error, sends it to the next middleware
  * (which is probably the custom error handler middleware).
+ * 2- Ensures that if a dbClient is present, release is called on it.
  * It is used to avoid writing the same try-catch
  * that does this same process in every single middleware.
- * @param {*} fn 
- * @returns 
+ * @param {*} fn
+ * @returns
  */
-const wrapMidd = (fn) => (req, res, next) => {  
-  Promise.resolve(fn(req, res, next)).catch((err) => next(err));  
+const wrapMidd = (fn) => (req, res, next) => {
+  console.log({ "wrapMidd.req": Object.getOwnPropertyNames(req) });
+  Promise.resolve(fn(req, res, next))
+    .catch((err) => next(err))
+    .finally(() => {
+      if (req.dbClient) {
+        req.dbClient.release();
+      }
+    });
 };
 
 const getErrorHandler = () => {
   return async (err, req, res, next) => {
+    console.log("mainErrorHandler.err", err);
 
-    console.log('mainErrorHandler.err', err);
+    // if (req.dbClient) {
+    //   dbClient.release();
+    // }
 
     // If it is an instance of 'ApiError'
     // it could contain statusCode.
@@ -36,8 +45,7 @@ const getErrorHandler = () => {
 const hashPassword = async (passwd) => {
   const saltRounds = 10;
 
-  const salt = await bcrypt
-    .genSalt(saltRounds);
+  const salt = await bcrypt.genSalt(saltRounds);
 
   const passwordHash = bcrypt.hash(passwd, salt);
 
