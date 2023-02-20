@@ -24,7 +24,7 @@ const getUserById = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  console.log({ "createUser.req": Object.getOwnPropertyNames(req) });
+  // console.log({ "createUser.req": Object.getOwnPropertyNames(req) });
 
   const { firstname, lastname, email, username, passwd } = req.body;
 
@@ -106,7 +106,7 @@ const login = async (req, res) => {
     });
   }
 
-  console.log({ username, passwd });
+  // console.log({ username, passwd });
 
   const errorMessage = `Username or password not valid`;
 
@@ -115,7 +115,7 @@ const login = async (req, res) => {
     [username]
   );
 
-  console.log({ result });
+  // console.log({ result });
 
   const user = result?.rows?.[0];
 

@@ -12,15 +12,28 @@ const { StatusCodes } = require("http-status-codes");
  * @param {*} fn
  * @returns
  */
-const wrapMidd = (fn) => (req, res, next) => {
-  console.log({ "wrapMidd.req": Object.getOwnPropertyNames(req) });
-  Promise.resolve(fn(req, res, next))
-    .catch((err) => next(err))
-    .finally(() => {
-      if (req.dbClient) {
-        req.dbClient.release();
+const wrapMidd = (fn, config) => {
+  // Disconnect from db unless explicitly told not to
+  // (in case the next middleware uses the connection)
+  const disconnectFromDb = config ? config.disconnectFromDb : true;
+
+  return async (req, res, next) => {
+    // console.log({ "wrapMidd.req": Object.getOwnPropertyNames(req) });
+    try {
+      await fn(req, res, next);
+    } catch (err) {
+      next(err);
+    } finally {
+      if (disconnectFromDb && req.dbClient) {
+        console.log("calling release");
+        try {
+          req.dbClient.release();
+        } catch (releaseError) {
+          console.err("releaseError", releaseError);
+        }
       }
-    });
+    }
+  };
 };
 
 const getErrorHandler = () => {

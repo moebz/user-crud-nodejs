@@ -6,7 +6,7 @@ const expect = chai.expect;
 require("dotenv").config();
 console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
-const { getDbClient } = require("../middleware");
+const { wrapMidd } = require("../helpers");
 const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
@@ -97,9 +97,11 @@ describe("Unit: UserController", function () {
 
       // call to createUser
 
-      await createUser(req, res);
+      const wrappedMiddleware = wrapMidd(createUser);
 
-      console.log({ sendStub: sendStub.getCall(0).args });
+      await wrappedMiddleware(req, res);
+
+      // console.log({ sendStub: sendStub.getCall(0).args });
 
       // expects
 
@@ -112,6 +114,7 @@ describe("Unit: UserController", function () {
           message: `User added with ID: ${insertedId}`,
         })
       ).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
     });
 
     it("Should not register a user that is sending more than one image", async function () {
@@ -180,15 +183,17 @@ describe("Unit: UserController", function () {
 
       const req = {
         body: mockUser,
+        dbClient: client,
       };
 
       // call to createUser
 
-      await createUser(req, res);
+      const wrappedMiddleware = wrapMidd(createUser);
+
+      await wrappedMiddleware(req, res);
 
       // expects
 
-      // expect(getClientStub.calledOnce).to.be.true;
       expect(queryStub.notCalled).to.be.true;
       expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
         .true;
@@ -197,7 +202,8 @@ describe("Unit: UserController", function () {
           message: "Username and password are required",
         })
       ).to.be.true;
-      // expect(releaseStub.calledOnce).to.be.true;
+      // console.log('passwordNotProvided.releaseStub.calledTimes', releaseStub.getCalls());
+      expect(releaseStub.calledOnce).to.be.true;
     });
   });
 
@@ -283,7 +289,9 @@ describe("Unit: UserController", function () {
 
       // get user call
 
-      await getUserById(req, res);
+      const wrappedMiddleware = wrapMidd(getUserById);
+
+      await wrappedMiddleware(req, res);
 
       // expects
 
@@ -296,7 +304,7 @@ describe("Unit: UserController", function () {
           message: null,
         })
       ).to.be.true;
-      // expect(releaseStub.calledOnce).to.be.true;
+      expect(releaseStub.calledOnce).to.be.true;
     });
   });
 });

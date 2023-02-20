@@ -10,7 +10,11 @@ router.get("/ping", (req, res) => {
   return res.send("ping response");
 });
 
-router.get("/users", middleware.getDbClient, wrapMidd(controller.getUsers));
+router.get(
+  "/users",
+  middleware.getDbClient,
+  wrapMidd(controller.getUsers)
+);
 router.get(
   "/users/:id",
   middleware.getDbClient,
@@ -20,7 +24,7 @@ router.post(
   "/users",
   middleware.verifyUserToken,
   middleware.getDbClient,
-  wrapMidd(middleware.fileUploadHandler),
+  wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.createUser)
 );
 router.post("/login", middleware.getDbClient, wrapMidd(controller.login));
@@ -28,7 +32,7 @@ router.put(
   "/users/:id",
   middleware.verifyUserToken,
   middleware.getDbClient,
-  wrapMidd(middleware.fileUploadHandler),
+  wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
 );
 router.delete(

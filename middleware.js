@@ -30,7 +30,7 @@ const verifyUserToken = async (request, response, next) => {
   } catch (err) {
     console.log(err);
     return response
-      .status(401)
+      .status(httpStatus.UNAUTHORIZED)
       .send({ message: "Failed to authenticate user token." });
   }
 };
@@ -68,13 +68,13 @@ const multerInstance = multer({
 
 const fileUploadHandler = (req, res, next) => {
 
-  console.log({'fileUploadHandler.req': Object.getOwnPropertyNames(req)});
+  // console.log({'fileUploadHandler.req': Object.getOwnPropertyNames(req)});
 
   const fileUploadMiddleware = multerInstance.single("avatar");
 
   fileUploadMiddleware(req, res, (err) => {
 
-    console.log({'fileUploadMiddleware.req': Object.getOwnPropertyNames(req)});
+    // console.log({'fileUploadMiddleware.req': Object.getOwnPropertyNames(req)});
 
     // console.log('fileUploadMiddleware.err', err);
     if (err instanceof multer.MulterError && err?.code === "LIMIT_FILE_SIZE") {
