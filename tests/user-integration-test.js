@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const request = require("supertest");
 const httpStatus = require("http-status");
+const helpers = require("../helpers");
 
 // console.log = function () {};
 
@@ -20,19 +21,47 @@ describe("Integration: UserController", function () {
   let app;
   let client;
   let userToken;
+  let existingTestUserAndPassword;
 
   before("Load app", async function () {
     app = require("../index");
     client = await db.getClient();
   });
 
-  beforeEach("Login to get auth token", async function () {
-    const req = {
-      username: "nomullen5",
+  before("Insert user to perform login later", async function () {
+    const testUserToInsert = {
+      username: "theTestUser",
       passwd: "123456",
     };
-    const { body } = await request(app).post("/login").send(req);
-    // console.log("body", body);
+
+    const passwordHash = await helpers.hashPassword(testUserToInsert.passwd);
+
+    // ON CONFLICT DO NOTHING = if the user already exists, don't throw an error.
+    await client.query(
+      `INSERT INTO user_account (
+        firstname,
+        lastname,
+        email,
+        username,
+        passwd,
+        avatar_url
+      ) VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+      ) ON CONFLICT DO NOTHING RETURNING *`,
+      [null, null, null, testUserToInsert.username, passwordHash, null]
+    );
+
+    existingTestUserAndPassword = testUserToInsert;
+  });
+
+  beforeEach("Login to get auth token", async function () {
+    const req = existingTestUserAndPassword;
+    const { body } = await request(app).post("/login").send(req);    
     userToken = body.data.userToken;
   });
 
@@ -41,7 +70,7 @@ describe("Integration: UserController", function () {
       const uniqueUsername = `user${Date.now()}`;
 
       const req = {
-        firstname: 'integration test user 1',
+        firstname: "integration test user 1",
         username: uniqueUsername,
         passwd: "123456",
       };
@@ -61,17 +90,6 @@ describe("Integration: UserController", function () {
     });
 
     it("Should not register a user that is sending more than one image", async function () {
-      const req = {
-        username: "nomullen5",
-        passwd: "123456",
-      };
-
-      const { body } = await request(app).post("/login").send(req);
-
-      // console.log("body", body);
-
-      const userToken = body.data.userToken;
-
       const mockUser = {
         firstname: "integrationtestIago",
         lastname: "testHedderly",
@@ -97,17 +115,6 @@ describe("Integration: UserController", function () {
     });
 
     it("Should register a user that is sending one image", async function () {
-      const req = {
-        username: "nomullen5",
-        passwd: "123456",
-      };
-
-      const { body } = await request(app).post("/login").send(req);
-
-      // console.log("body", body);
-
-      const userToken = body.data.userToken;
-
       const uniqueUsername = `user${Date.now()}`;
       const uniqueEmail = `testihedderlyrr${Date.now()}@upenn.edu`;
 
