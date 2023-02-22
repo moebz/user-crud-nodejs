@@ -1,5 +1,3 @@
-const proxyquire = require("proxyquire").noCallThru();
-const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
 const expect = chai.expect;
@@ -7,8 +5,6 @@ require("dotenv").config();
 console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
 const { getDbClient } = require("../middleware");
-const { getUserById, createUser } = require("../controller");
-const helpers = require("../helpers");
 
 describe("get db client middleware", function () {
   let getClientStub,

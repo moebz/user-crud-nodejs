@@ -1,5 +1,4 @@
 const httpStatus = require("http-status");
-const { db } = require("./database");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 
@@ -7,7 +6,7 @@ const helpers = require("./helpers");
 
 // console.log = function () {};
 
-const getUsers = async (req, res, next) => {
+const getUsers = async (req, res) => {
   const result = await req.dbClient.query(
     "SELECT * FROM user_account ORDER BY id ASC"
   );
@@ -119,7 +118,7 @@ const login = async (req, res) => {
 
   const user = result?.rows?.[0];
 
-  if (!Boolean(user)) {
+  if (!user) {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: errorMessage + "1",
     });
@@ -127,7 +126,7 @@ const login = async (req, res) => {
 
   const loginResult = await helpers.comparePasswords(passwd, user.passwd);
 
-  if (!Boolean(loginResult)) {
+  if (!loginResult) {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: errorMessage + "2",
     });

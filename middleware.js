@@ -9,7 +9,7 @@ const { db } = require("./database");
 
 // console.log = function () {};
 
-const { JWT_SECRET, JWT_EXPIRATION } = process.env;
+const { JWT_SECRET } = process.env;
 
 const verifyUserToken = async (request, response, next) => {
   try {
@@ -91,6 +91,8 @@ const fileUploadHandler = (req, res, next) => {
   });
 };
 
+// Middleware to get a db client
+// to execute queries.
 const getDbClient = async (req, res, next) => {
   const client = await db.getClient();
   req.dbClient = client;

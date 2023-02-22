@@ -15,7 +15,6 @@ if (NODE_ENV !== "test") {
 }
 
 const { db } = require("../database");
-const { getDbClient } = require('../middleware');
 
 describe("Integration: UserController", function () {
   let app;

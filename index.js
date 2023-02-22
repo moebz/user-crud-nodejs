@@ -1,8 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const {
-	StatusCodes,
-} = require('http-status-codes');
 require("dotenv").config();
 const routes = require("./routes");
 const NotFoundError = require('./classes/NotFoundError');

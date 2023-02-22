@@ -14,12 +14,12 @@ const {
 } = process.env;
 
 if (
-  !Boolean(RDB_USER) ||
-  !Boolean(RDB_HOST) ||
-  !Boolean(RDB_NAME) ||
-  !Boolean(TEST_RDB_NAME) ||
-  !Boolean(RDB_PASSWORD) ||
-  !Boolean(RDB_PORT)
+  !RDB_USER ||
+  !RDB_HOST ||
+  !RDB_NAME ||
+  !TEST_RDB_NAME ||
+  !RDB_PASSWORD ||
+  !RDB_PORT
 ) {
   // "pg" will use default values if
   // it doesn't receive RDB_NAME

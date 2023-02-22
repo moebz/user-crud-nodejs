@@ -36,6 +36,7 @@ const wrapMidd = (fn, config) => {
 };
 
 const getErrorHandler = () => {
+  // eslint-disable-next-line no-unused-vars
   return async (err, req, res, next) => {
     console.log("mainErrorHandler.err", err);
 

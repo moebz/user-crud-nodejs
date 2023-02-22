@@ -255,6 +255,7 @@ describe("Unit: UserController", function () {
       statusStub.restore();
       jsonStub.restore();
       releaseStub.restore();
+      sendStub.restore();
     });
 
     it("Should get user by id", async function () {
