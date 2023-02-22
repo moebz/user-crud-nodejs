@@ -25,7 +25,6 @@ const wrapMidd = (fn, config) => {
       next(err);
     } finally {
       if (disconnectFromDb && req.dbClient) {
-        console.log("calling release");
         try {
           req.dbClient.release();
         } catch (releaseError) {
