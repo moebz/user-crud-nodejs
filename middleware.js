@@ -19,7 +19,9 @@ const verifyUserToken = async (request, response, next) => {
       request.query.userToken;
 
     if (!token) {
-      return response.status(403).send({ message: "No user token provided." });
+      return response
+        .status(httpStatus.UNAUTHORIZED)
+        .send({ message: "No user token provided." });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -67,13 +69,11 @@ const multerInstance = multer({
 });
 
 const fileUploadHandler = (req, res, next) => {
-
   // console.log({'fileUploadHandler.req': Object.getOwnPropertyNames(req)});
 
   const fileUploadMiddleware = multerInstance.single("avatar");
 
   fileUploadMiddleware(req, res, (err) => {
-
     // console.log({'fileUploadMiddleware.req': Object.getOwnPropertyNames(req)});
 
     // console.log('fileUploadMiddleware.err', err);

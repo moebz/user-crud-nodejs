@@ -141,7 +141,7 @@ describe("Integration: UserController", function () {
       .post("/users")
       .set("user-token", userToken)
       .send(req)
-      .expect(201);
+      .expect(httpStatus.CREATED);
     return body;
   }
 });
