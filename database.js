@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const { Pool } = require("pg");
 
 // In case it wasn't called outside
@@ -59,8 +60,7 @@ const db = {
   },
   async getClient() {
     const client = await pool.connect();
-    const query = client.query;
-    const release = client.release;
+    const { query, release } = client;
     // set a timeout of 5 seconds, after which we will log this client's last query
     const timeout = setTimeout(() => {
       console.error("A client has been checked out for more than 5 seconds!");

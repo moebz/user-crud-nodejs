@@ -1,7 +1,17 @@
 const { expect } = require("chai");
 const request = require("supertest");
 const httpStatus = require("http-status");
+const app = require("../index");
 const helpers = require("../helpers");
+
+async function postUser(req, userToken) {
+  const { body } = await request(app)
+    .post("/users")
+    .set("user-token", userToken)
+    .send(req)
+    .expect(httpStatus.CREATED);
+  return body;
+}
 
 // console.log = function () {};
 
@@ -17,18 +27,16 @@ if (NODE_ENV !== "test") {
 
 const { db } = require("../database");
 
-describe("Integration: UserController", function () {
-  let app;
+describe("Integration: UserController", () => {
   let client;
   let userToken;
   let existingTestUserAndPassword;
 
-  before("Load app", async function () {
-    app = require("../index");
+  before("Load app", async () => {
     client = await db.getClient();
   });
 
-  before("Insert user to perform login later", async function () {
+  before("Insert user to perform login later", async () => {
     const testUserToInsert = {
       username: "theTestUser",
       passwd: "123456",
@@ -59,14 +67,14 @@ describe("Integration: UserController", function () {
     existingTestUserAndPassword = testUserToInsert;
   });
 
-  beforeEach("Login to get auth token", async function () {
+  beforeEach("Login to get auth token", async () => {
     const req = existingTestUserAndPassword;
-    const { body } = await request(app).post("/login").send(req);    
+    const { body } = await request(app).post("/login").send(req);
     userToken = body.data.userToken;
   });
 
-  describe("POST /users", function () {
-    it("Should create a new user", async function () {
+  describe("POST /users", () => {
+    it("Should create a new user", async () => {
       const uniqueUsername = `user${Date.now()}`;
 
       const req = {
@@ -74,7 +82,7 @@ describe("Integration: UserController", function () {
         username: uniqueUsername,
         passwd: "123456",
       };
-      await postUser(req);
+      await postUser(req, userToken);
 
       const { rows } = await client.query(
         "SELECT firstname, username FROM user_account WHERE username = $1",
@@ -89,7 +97,7 @@ describe("Integration: UserController", function () {
       });
     });
 
-    it("Should not register a user that is sending more than one image", async function () {
+    it("Should not register a user that is sending more than one image", async () => {
       const mockUser = {
         firstname: "integrationtestIago",
         lastname: "testHedderly",
@@ -114,7 +122,7 @@ describe("Integration: UserController", function () {
       expect(res.status).to.equal(httpStatus.BAD_REQUEST);
     });
 
-    it("Should register a user that is sending one image", async function () {
+    it("Should register a user that is sending one image", async () => {
       const uniqueUsername = `user${Date.now()}`;
       const uniqueEmail = `testihedderlyrr${Date.now()}@upenn.edu`;
 
@@ -141,13 +149,4 @@ describe("Integration: UserController", function () {
       expect(res.status).to.equal(httpStatus.CREATED);
     });
   });
-
-  async function postUser(req) {
-    const { body } = await request(app)
-      .post("/users")
-      .set("user-token", userToken)
-      .send(req)
-      .expect(httpStatus.CREATED);
-    return body;
-  }
 });

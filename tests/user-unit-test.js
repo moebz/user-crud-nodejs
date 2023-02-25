@@ -2,24 +2,26 @@ const proxyquire = require("proxyquire").noCallThru();
 const httpStatus = require("http-status");
 const chai = require("chai");
 const sinon = require("sinon");
-const expect = chai.expect;
+
+const { expect } = chai;
 require("dotenv").config();
-console.log({ nodeEnv: process.env.NODE_ENV });
+
+// console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
 const { wrapMidd } = require("../helpers");
 const { getUserById, createUser } = require("../controller");
 const helpers = require("../helpers");
 
-describe("Unit: UserController", function () {
-  describe("createUser", function () {
-    let getClientStub,
-      client,
-      releaseStub,
-      queryStub,
-      res,
-      statusStub,
-      sendStub,
-      jsonStub;
+describe("Unit: UserController", () => {
+  describe("createUser", () => {
+    let getClientStub;
+    let client;
+    let releaseStub;
+    let queryStub;
+    let res;
+    let statusStub;
+    let sendStub;
+    let jsonStub;
 
     beforeEach(async () => {
       // db client setup
@@ -39,9 +41,9 @@ describe("Unit: UserController", function () {
       // response setup
 
       res = {
-        status: function () {},
-        json: function () {},
-        send: function () {},
+        status() {},
+        json() {},
+        send() {},
       };
 
       statusStub = sinon.stub(res, "status").returns(res);
@@ -59,7 +61,7 @@ describe("Unit: UserController", function () {
       releaseStub.restore();
     });
 
-    it("Should register a user", async function () {
+    it("Should register a user", async () => {
       // db data setup
 
       const mockUser = {
@@ -105,19 +107,22 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      expect(hashPasswordStub.calledOnceWithExactly(mockUser.passwd)).to.be
-        .true;
-      expect(queryStub.calledOnce).to.be.true;
-      expect(statusStub.calledOnceWithExactly(httpStatus.CREATED)).to.be.true;
+      expect(
+        hashPasswordStub.calledOnceWithExactly(mockUser.passwd)
+      ).to.be.equal(true);
+      expect(queryStub.calledOnce).to.be.equal(true);
+      expect(statusStub.calledOnceWithExactly(httpStatus.CREATED)).to.be.equal(
+        true
+      );
       expect(
         sendStub.calledOnceWithExactly({
           message: `User added with ID: ${insertedId}`,
         })
-      ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
+      ).to.be.equal(true);
+      expect(releaseStub.calledOnce).to.be.equal(true);
     });
 
-    it("Should not register a user that is sending more than one image", async function () {
+    it("Should not register a user that is sending more than one image", async () => {
       const req = {
         files: [
           {
@@ -135,7 +140,7 @@ describe("Unit: UserController", function () {
         ],
       };
 
-      const res = {
+      const mRes = {
         status: sinon.stub().returnsThis(),
         send: sinon.spy(),
       };
@@ -143,19 +148,21 @@ describe("Unit: UserController", function () {
       const next = sinon.spy();
 
       const { fileUploadHandler } = proxyquire("../middleware", {
+        // eslint-disable-next-line global-require
         multer: require("./mocks/multerMockForUnexpectedFile"),
       });
 
-      fileUploadHandler(req, res, next);
+      fileUploadHandler(req, mRes, next);
 
-      expect(res.status.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
-        .true;
+      expect(
+        res.status.calledOnceWithExactly(httpStatus.BAD_REQUEST)
+      ).to.be.equal(true);
       expect(
         res.send.calledOnceWithExactly({ message: "An unknown error occurred" })
-      ).to.be.true;
+      ).to.be.equal(true);
     });
 
-    it("Should not register a user when password is not provided", async function () {
+    it("Should not register a user when password is not provided", async () => {
       // db data setup
 
       const mockUser = {
@@ -194,28 +201,29 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      expect(queryStub.notCalled).to.be.true;
-      expect(statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)).to.be
-        .true;
+      expect(queryStub.notCalled).to.be.equal(true);
+      expect(
+        statusStub.calledOnceWithExactly(httpStatus.BAD_REQUEST)
+      ).to.be.equal(true);
       expect(
         sendStub.calledOnceWithExactly({
           message: "Username and password are required",
         })
-      ).to.be.true;
+      ).to.be.equal(true);
       // console.log('passwordNotProvided.releaseStub.calledTimes', releaseStub.getCalls());
-      expect(releaseStub.calledOnce).to.be.true;
+      expect(releaseStub.calledOnce).to.be.equal(true);
     });
   });
 
-  describe("getUserById", function () {
-    let getClientStub,
-      client,
-      releaseStub,
-      queryStub,
-      res,
-      statusStub,
-      sendStub,
-      jsonStub;
+  describe("getUserById", () => {
+    let getClientStub;
+    let client;
+    let releaseStub;
+    let queryStub;
+    let res;
+    let statusStub;
+    let sendStub;
+    let jsonStub;
 
     beforeEach(async () => {
       // db client setup
@@ -237,9 +245,9 @@ describe("Unit: UserController", function () {
       // response setup
 
       res = {
-        status: function () {},
-        json: function () {},
-        send: function () {},
+        status() {},
+        json() {},
+        send() {},
       };
 
       statusStub = sinon.stub(res, "status").returns(res);
@@ -258,7 +266,7 @@ describe("Unit: UserController", function () {
       sendStub.restore();
     });
 
-    it("Should get user by id", async function () {
+    it("Should get user by id", async () => {
       // user data setup
 
       const idToSearch = 1000;
@@ -296,16 +304,16 @@ describe("Unit: UserController", function () {
 
       // expects
 
-      // expect(getClientStub.calledOnce).to.be.true;
-      expect(queryStub.calledOnce).to.be.true;
-      expect(statusStub.calledOnceWithExactly(httpStatus.OK)).to.be.true;
+      // expect(getClientStub.calledOnce).to.be.equal(true);
+      expect(queryStub.calledOnce).to.be.equal(true);
+      expect(statusStub.calledOnceWithExactly(httpStatus.OK)).to.be.equal(true);
       expect(
         jsonStub.calledOnceWithExactly({
           data: mockDbRows,
           message: null,
         })
-      ).to.be.true;
-      expect(releaseStub.calledOnce).to.be.true;
+      ).to.be.equal(true);
+      expect(releaseStub.calledOnce).to.be.equal(true);
     });
   });
 });

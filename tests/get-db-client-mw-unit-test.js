@@ -1,21 +1,23 @@
 const chai = require("chai");
 const sinon = require("sinon");
-const expect = chai.expect;
+
+const { expect } = chai;
 require("dotenv").config();
-console.log({ nodeEnv: process.env.NODE_ENV });
+
+// console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
 const { getDbClient } = require("../middleware");
 
-describe("get db client middleware", function () {
-  let getClientStub,
-    client,
-    releaseStub,
-    queryStub,
-    res,
-    statusStub,
-    sendStub,
-    jsonStub,
-    nextStub;
+describe("get db client middleware", () => {
+  let getClientStub;
+  let client;
+  let releaseStub;
+  let queryStub;
+  let res;
+  let statusStub;
+  let sendStub;
+  let jsonStub;
+  let nextStub;
 
   beforeEach(async () => {
     // db client setup
@@ -34,9 +36,9 @@ describe("get db client middleware", function () {
     // response setup
 
     res = {
-      status: function () {},
-      json: function () {},
-      send: function () {},
+      status: () => {},
+      json: () => {},
+      send: () => {},
     };
 
     statusStub = sinon.stub(res, "status").returns(res);
@@ -56,15 +58,14 @@ describe("get db client middleware", function () {
     releaseStub?.restore?.();
   });
 
-  it("Should set the db client in the request object", async function () {
-
+  it("Should set the db client in the request object", async () => {
     nextStub = sinon.spy();
-    let req = {};
+    const req = {};
 
     await getDbClient(req, res, nextStub);
 
-    expect(getClientStub.calledOnce).to.be.true;
-    expect(nextStub.calledOnce).to.be.true;
-    expect(req.dbClient === client).to.be.true;
+    expect(getClientStub.calledOnce).to.be.equal(true);
+    expect(nextStub.calledOnce).to.be.equal(true);
+    expect(req.dbClient === client).to.be.equal(true);
   });
 });

@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
 const express = require("express");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const routes = require("./routes");
-const NotFoundError = require('./classes/NotFoundError');
-const { getErrorHandler } = require('./helpers');
+const NotFoundError = require("./classes/NotFoundError");
+const { getErrorHandler } = require("./helpers");
 
 const app = express();
 const port = 4000;

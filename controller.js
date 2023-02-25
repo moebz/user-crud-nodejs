@@ -14,7 +14,7 @@ const getUsers = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id, 10);
   const result = await req.dbClient.query(
     "SELECT * FROM user_account WHERE id = $1",
     [id]
@@ -86,7 +86,7 @@ const createUser = async (req, res) => {
     fs.renameSync(req.file.path, fullNewFilepath);
   }
 
-  res
+  return res
     .status(httpStatus.CREATED)
     .send({ message: `User added with ID: ${insertedId}` });
 };
@@ -120,7 +120,7 @@ const login = async (req, res) => {
 
   if (!user) {
     return res.status(httpStatus.BAD_REQUEST).send({
-      message: errorMessage + "1",
+      message: `${errorMessage}`,
     });
   }
 
@@ -128,7 +128,7 @@ const login = async (req, res) => {
 
   if (!loginResult) {
     return res.status(httpStatus.BAD_REQUEST).send({
-      message: errorMessage + "2",
+      message: `${errorMessage}`,
     });
   }
 
@@ -154,7 +154,7 @@ const login = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id, 10);
   const { firstname, lastname, email, username } = req.body;
 
   await req.dbClient.query(
@@ -172,7 +172,7 @@ const updateUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id, 10);
 
   await req.dbClient.query("DELETE FROM user_account WHERE id = $1", [id]);
 

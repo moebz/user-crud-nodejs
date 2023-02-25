@@ -10,11 +10,7 @@ router.get("/ping", (req, res) => {
   return res.send("ping response");
 });
 
-router.get(
-  "/users",
-  middleware.getDbClient,
-  wrapMidd(controller.getUsers)
-);
+router.get("/users", middleware.getDbClient, wrapMidd(controller.getUsers));
 router.get(
   "/users/:id",
   middleware.getDbClient,

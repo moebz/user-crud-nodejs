@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
 
@@ -35,9 +36,10 @@ const wrapMidd = (fn, config) => {
   };
 };
 
-const getErrorHandler = () => {
+const getErrorHandler =
+  () =>
   // eslint-disable-next-line no-unused-vars
-  return async (err, req, res, next) => {
+  async (err, req, res, next) => {
     console.log("mainErrorHandler.err", err);
 
     // if (req.dbClient) {
@@ -53,7 +55,6 @@ const getErrorHandler = () => {
       // stack: err.stack,
     });
   };
-};
 
 const hashPassword = async (passwd) => {
   const saltRounds = 10;
@@ -65,9 +66,8 @@ const hashPassword = async (passwd) => {
   return passwordHash;
 };
 
-const comparePasswords = async (clearTextPassword, hashedPassword) => {
-  return bcrypt.compare(clearTextPassword, hashedPassword);
-};
+const comparePasswords = async (clearTextPassword, hashedPassword) =>
+  bcrypt.compare(clearTextPassword, hashedPassword);
 
 module.exports = {
   wrapMidd,

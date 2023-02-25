@@ -28,7 +28,7 @@ const verifyUserToken = async (request, response, next) => {
 
     request.decodedUserToken = decoded;
 
-    next();
+    return next();
   } catch (err) {
     console.log(err);
     return response
@@ -81,7 +81,9 @@ const fileUploadHandler = (req, res, next) => {
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "Uploaded file size should be less than 2 MB",
       });
-    } else if (err) {
+    }
+
+    if (err) {
       // console.log('fileUploadHandler.err', err);
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "An unknown error occurred",
