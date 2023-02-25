@@ -89,7 +89,8 @@ const fileUploadHandler = (req, res, next) => {
         message: "An unknown error occurred",
       });
     }
-    next();
+
+    return next();
   });
 };
 
