@@ -8,7 +8,7 @@ require("dotenv").config();
 const { db } = require("../database");
 const { getDbClient } = require("../middleware");
 
-describe("get db client middleware", () => {
+describe("Middleware to get database client instance", () => {
   let getClientStub;
   let client;
   let releaseStub;

@@ -155,10 +155,12 @@ describe("Unit: UserController", () => {
       fileUploadHandler(req, mRes, next);
 
       expect(
-        res.status.calledOnceWithExactly(httpStatus.BAD_REQUEST)
+        mRes.status.calledOnceWithExactly(httpStatus.BAD_REQUEST)
       ).to.be.equal(true);
       expect(
-        res.send.calledOnceWithExactly({ message: "An unknown error occurred" })
+        mRes.send.calledOnceWithExactly({
+          message: "An unknown error occurred",
+        })
       ).to.be.equal(true);
     });
 
