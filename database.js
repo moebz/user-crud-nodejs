@@ -1,5 +1,10 @@
 /* eslint-disable no-console */
-const { Pool } = require("pg");
+const pg = require("pg");
+
+// const { types } = pg;
+// types.setTypeParser(1114, (stringValue) => new Date(stringValue + "+0000"));
+
+const { Pool } = pg;
 
 // In case it wasn't called outside
 require("dotenv").config();

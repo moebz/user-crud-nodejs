@@ -37,5 +37,10 @@ router.delete(
   middleware.getDbClient,
   wrapMidd(controller.deleteUser)
 );
+router.post(
+  "/token/refresh",
+  middleware.getDbClient,
+  wrapMidd(controller.doRefreshToken)
+);
 
 module.exports = router;
