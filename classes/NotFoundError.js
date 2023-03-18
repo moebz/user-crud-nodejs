@@ -1,9 +1,9 @@
-const { StatusCodes } = require("http-status-codes");
+const httpStatus = require("http-status");
 const ApiError = require("./ApiError");
 
 class NotFoundError extends ApiError {
   constructor() {
-    super(StatusCodes.NOT_FOUND, "The requested path was not found");
+    super(httpStatus.NOT_FOUND, "The requested path was not found");
   }
 }
 

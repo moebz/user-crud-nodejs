@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 const bcrypt = require("bcrypt");
-const { StatusCodes } = require("http-status-codes");
+const httpStatus = require("http-status");
 
 /**
  * It receives an express middleware, wraps it in a "try-catch" and returns it
@@ -48,7 +48,7 @@ const getErrorHandler =
 
     // If it is an instance of 'ApiError'
     // it could contain statusCode.
-    const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const statusCode = err.statusCode || httpStatus.INTERNAL_SERVER_ERROR;
 
     res.status(statusCode).send({
       message: err.message,
