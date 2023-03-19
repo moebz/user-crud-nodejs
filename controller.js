@@ -8,9 +8,29 @@ const helpers = require("./helpers");
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
-  const result = await req.dbClient.query(
-    "SELECT * FROM user_account ORDER BY id ASC"
-  );
+  const { pageSize, pageNumber, orderBy, orderDirection } = req.query;
+
+  console.log("getUsers.urlQuery", req.query);
+
+  const mOrderBy = orderBy || "id";
+
+  if (
+    !["id", "firstname", "lastname", "email", "username"].includes(mOrderBy)
+  ) {
+    throw new Error("Column to order by not valid");
+  }
+
+  const mOrderDirection = orderDirection ? orderDirection.toUpperCase() : "ASC";
+
+  if (!["DESC", "ASC"].includes(mOrderDirection)) {
+    throw new Error("Order direction not valid");
+  }
+
+  const query = `SELECT id, firstname, lastname, email, username, passwd, avatar_url FROM user_account ORDER BY ${orderBy} ${mOrderDirection} LIMIT $2 OFFSET (($1 - 1) * $2);`;
+
+  console.log("query", query);
+
+  const result = await req.dbClient.query(query, [pageNumber, pageSize]);
   res.status(httpStatus.OK).json(result.rows);
 };
 
