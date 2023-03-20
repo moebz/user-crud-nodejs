@@ -37,6 +37,10 @@ const getUsers = async (req, res) => {
 
   const params = [pageNumber, pageSize];
 
+  if (!pageSize || !pageNumber) {
+    throw new Error("Page size and page number are required");
+  }
+
   const whereClauseItems = [];
 
   if (firstname) {
