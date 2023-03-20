@@ -8,7 +8,16 @@ const helpers = require("./helpers");
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
-  const { pageSize, pageNumber, orderBy, orderDirection } = req.query;
+  const {
+    pageSize,
+    pageNumber,
+    orderBy,
+    orderDirection,
+    firstname,
+    lastname,
+    email,
+    username,
+  } = req.query;
 
   console.log("getUsers.urlQuery", req.query);
 
@@ -26,11 +35,48 @@ const getUsers = async (req, res) => {
     throw new Error("Order direction not valid");
   }
 
-  const query = `SELECT id, firstname, lastname, email, username, passwd, avatar_url FROM user_account ORDER BY ${orderBy} ${mOrderDirection} LIMIT $2 OFFSET (($1 - 1) * $2);`;
+  const params = [pageNumber, pageSize];
+
+  const whereClauseItems = [];
+
+  if (firstname) {
+    whereClauseItems.push(`firstname ILIKE $${params.length + 1}`);
+    params.push(`%${firstname}%`);
+  }
+
+  if (lastname) {
+    whereClauseItems.push(`lastname ILIKE $${params.length + 1}`);
+    params.push(`%${lastname}%`);
+  }
+
+  if (email) {
+    whereClauseItems.push(`email ILIKE $${params.length + 1}`);
+    params.push(`%${email}%`);
+  }
+
+  if (username) {
+    whereClauseItems.push(`username ILIKE $${params.length + 1}`);
+    params.push(`%${username}%`);
+  }
+
+  let whereClause = whereClauseItems.join(" AND ");
+
+  whereClause = whereClause ? `WHERE ${whereClause}` : "";
+
+  const query = `
+    SELECT
+      id, firstname, lastname, email, username, passwd, avatar_url
+    FROM
+      user_account
+    ${whereClause}
+    ORDER BY
+      ${orderBy} ${mOrderDirection}
+    LIMIT $2 OFFSET (($1 - 1) * $2);
+  `;
 
   console.log("query", query);
 
-  const result = await req.dbClient.query(query, [pageNumber, pageSize]);
+  const result = await req.dbClient.query(query, params);
   res.status(httpStatus.OK).json(result.rows);
 };
 
