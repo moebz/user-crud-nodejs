@@ -35,37 +35,51 @@ const getUsers = async (req, res) => {
     throw new Error("Order direction not valid");
   }
 
-  const params = [pageNumber, pageSize];
+  const allParams = [pageNumber, pageSize];
+  const paramsForCount = [];
 
   if (!pageSize || !pageNumber) {
     throw new Error("Page size and page number are required");
   }
 
   const whereClauseItems = [];
+  const whereClauseItemsForCount = [];
 
   if (firstname) {
-    whereClauseItems.push(`firstname ILIKE $${params.length + 1}`);
-    params.push(`%${firstname}%`);
+    whereClauseItems.push(`firstname ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `firstname ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${firstname}%`);
   }
 
   if (lastname) {
-    whereClauseItems.push(`lastname ILIKE $${params.length + 1}`);
-    params.push(`%${lastname}%`);
+    whereClauseItems.push(`lastname ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `lastname ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${lastname}%`);
   }
 
   if (email) {
-    whereClauseItems.push(`email ILIKE $${params.length + 1}`);
-    params.push(`%${email}%`);
+    whereClauseItems.push(`email ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(`email ILIKE $${paramsForCount.length + 1}`);
+    allParams.push(`%${email}%`);
   }
 
   if (username) {
-    whereClauseItems.push(`username ILIKE $${params.length + 1}`);
-    params.push(`%${username}%`);
+    whereClauseItems.push(`username ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `username ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${username}%`);
   }
 
   let whereClause = whereClauseItems.join(" AND ");
 
   whereClause = whereClause ? `WHERE ${whereClause}` : "";
+
+  const orderClause = `ORDER BY ${mOrderBy} ${mOrderDirection}`;
 
   const query = `
     SELECT
@@ -73,15 +87,27 @@ const getUsers = async (req, res) => {
     FROM
       user_account
     ${whereClause}
-    ORDER BY
-      ${orderBy} ${mOrderDirection}
+    ${orderClause}
     LIMIT $2 OFFSET (($1 - 1) * $2);
   `;
 
   console.log("query", query);
 
-  const result = await req.dbClient.query(query, params);
-  res.status(httpStatus.OK).json(result.rows);
+  const result = await req.dbClient.query(query, allParams);
+
+  let countWhereClause = whereClauseItemsForCount.join(" AND ");
+  countWhereClause = countWhereClause ? `WHERE ${countWhereClause}` : "";
+
+  const countQuery = `SELECT count(*) as total FROM user_account ${countWhereClause}`;
+
+  const countResult = await req.dbClient.query(countQuery, paramsForCount);
+
+  res.status(httpStatus.OK).json({
+    data: {
+      rows: result.rows,
+      total: countResult.rows[0].total,
+    },
+  });
 };
 
 const getUserById = async (req, res) => {
