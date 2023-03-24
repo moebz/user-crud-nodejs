@@ -8,17 +8,7 @@ const helpers = require("./helpers");
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
-  const {
-    pageSize,
-    pageNumber,
-    orderBy,
-    orderDirection,
-    filter,
-    firstname,
-    lastname,
-    email,
-    username,
-  } = req.query;
+  const { pageSize, pageNumber, orderBy, orderDirection, filter } = req.query;
 
   console.log("getUsers.urlQuery", req.query);
 
