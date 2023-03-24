@@ -47,61 +47,29 @@ const getUsers = async (req, res) => {
   const whereClauseItemsForCount = [];
 
   if (filter) {
-    whereClauseItems.push(`firstname ILIKE $${allParams.length + 1}`);
-    whereClauseItemsForCount.push(
-      `firstname ILIKE $${paramsForCount.length + 1}`
-    );
+    const nextParamPosition = allParams.length + 1;
+    const nextParamForCountPosition = paramsForCount.length + 1;
+
     allParams.push(`%${filter}%`);
     paramsForCount.push(`%${filter}%`);
 
-    whereClauseItems.push(`lastname ILIKE $${allParams.length + 1}`);
+    whereClauseItems.push(`firstname ILIKE $${nextParamPosition}`);
     whereClauseItemsForCount.push(
-      `lastname ILIKE $${paramsForCount.length + 1}`
+      `firstname ILIKE $${nextParamForCountPosition}`
     );
-    allParams.push(`%${filter}%`);
-    paramsForCount.push(`%${filter}%`);
 
-    whereClauseItems.push(`email ILIKE $${allParams.length + 1}`);
-    whereClauseItemsForCount.push(`email ILIKE $${paramsForCount.length + 1}`);
-    allParams.push(`%${filter}%`);
-    paramsForCount.push(`%${filter}%`);
-
-    whereClauseItems.push(`username ILIKE $${allParams.length + 1}`);
+    whereClauseItems.push(`lastname ILIKE $${nextParamPosition}`);
     whereClauseItemsForCount.push(
-      `username ILIKE $${paramsForCount.length + 1}`
+      `lastname ILIKE $${nextParamForCountPosition}`
     );
-    allParams.push(`%${filter}%`);
-    paramsForCount.push(`%${filter}%`);
-  }
 
-  if (firstname) {
-    whereClauseItems.push(`firstname ILIKE $${allParams.length + 1}`);
+    whereClauseItems.push(`email ILIKE $${nextParamPosition}`);
+    whereClauseItemsForCount.push(`email ILIKE $${nextParamForCountPosition}`);
+
+    whereClauseItems.push(`username ILIKE $${nextParamPosition}`);
     whereClauseItemsForCount.push(
-      `firstname ILIKE $${paramsForCount.length + 1}`
+      `username ILIKE $${nextParamForCountPosition}`
     );
-    allParams.push(`%${firstname}%`);
-  }
-
-  if (lastname) {
-    whereClauseItems.push(`lastname ILIKE $${allParams.length + 1}`);
-    whereClauseItemsForCount.push(
-      `lastname ILIKE $${paramsForCount.length + 1}`
-    );
-    allParams.push(`%${lastname}%`);
-  }
-
-  if (email) {
-    whereClauseItems.push(`email ILIKE $${allParams.length + 1}`);
-    whereClauseItemsForCount.push(`email ILIKE $${paramsForCount.length + 1}`);
-    allParams.push(`%${email}%`);
-  }
-
-  if (username) {
-    whereClauseItems.push(`username ILIKE $${allParams.length + 1}`);
-    whereClauseItemsForCount.push(
-      `username ILIKE $${paramsForCount.length + 1}`
-    );
-    allParams.push(`%${username}%`);
   }
 
   let whereClause = whereClauseItems.join(" OR ");
@@ -125,7 +93,7 @@ const getUsers = async (req, res) => {
 
   const result = await req.dbClient.query(query, allParams);
 
-  let countWhereClause = whereClauseItemsForCount.join(" AND ");
+  let countWhereClause = whereClauseItemsForCount.join(" OR ");
   countWhereClause = countWhereClause ? `WHERE ${countWhereClause}` : "";
 
   const countQuery = `SELECT count(*) as total FROM user_account ${countWhereClause}`;
