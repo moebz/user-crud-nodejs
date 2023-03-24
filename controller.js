@@ -13,6 +13,7 @@ const getUsers = async (req, res) => {
     pageNumber,
     orderBy,
     orderDirection,
+    filter,
     firstname,
     lastname,
     email,
@@ -45,6 +46,34 @@ const getUsers = async (req, res) => {
   const whereClauseItems = [];
   const whereClauseItemsForCount = [];
 
+  if (filter) {
+    whereClauseItems.push(`firstname ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `firstname ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${filter}%`);
+    paramsForCount.push(`%${filter}%`);
+
+    whereClauseItems.push(`lastname ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `lastname ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${filter}%`);
+    paramsForCount.push(`%${filter}%`);
+
+    whereClauseItems.push(`email ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(`email ILIKE $${paramsForCount.length + 1}`);
+    allParams.push(`%${filter}%`);
+    paramsForCount.push(`%${filter}%`);
+
+    whereClauseItems.push(`username ILIKE $${allParams.length + 1}`);
+    whereClauseItemsForCount.push(
+      `username ILIKE $${paramsForCount.length + 1}`
+    );
+    allParams.push(`%${filter}%`);
+    paramsForCount.push(`%${filter}%`);
+  }
+
   if (firstname) {
     whereClauseItems.push(`firstname ILIKE $${allParams.length + 1}`);
     whereClauseItemsForCount.push(
@@ -75,7 +104,7 @@ const getUsers = async (req, res) => {
     allParams.push(`%${username}%`);
   }
 
-  let whereClause = whereClauseItems.join(" AND ");
+  let whereClause = whereClauseItems.join(" OR ");
 
   whereClause = whereClause ? `WHERE ${whereClause}` : "";
 
@@ -92,6 +121,7 @@ const getUsers = async (req, res) => {
   `;
 
   console.log("query", query);
+  console.log("allParams", allParams);
 
   const result = await req.dbClient.query(query, allParams);
 
@@ -99,6 +129,9 @@ const getUsers = async (req, res) => {
   countWhereClause = countWhereClause ? `WHERE ${countWhereClause}` : "";
 
   const countQuery = `SELECT count(*) as total FROM user_account ${countWhereClause}`;
+
+  console.log("countQuery", countQuery);
+  console.log("paramsForCount", paramsForCount);
 
   const countResult = await req.dbClient.query(countQuery, paramsForCount);
 
