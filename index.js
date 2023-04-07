@@ -3,6 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const cors = require("cors");
+const path = require("path");
 const routes = require("./routes");
 const NotFoundError = require("./classes/NotFoundError");
 const { getErrorHandler } = require("./helpers");
@@ -13,6 +14,8 @@ const port = 4000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use("/public", express.static("public"));
 
 app.use("/", routes);
 
