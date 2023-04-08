@@ -383,16 +383,38 @@ const updateUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { firstname, lastname, email, username } = req.body;
 
-  await req.dbClient.query(
-    `UPDATE user_account SET
+  try {
+    await req.dbClient.query(
+      `UPDATE user_account SET
       firstname = $1,
       lastname = $2,
       email = $3,
       username = $4
     WHERE
       id = $5`,
-    [firstname, lastname, email, username, id]
-  );
+      [firstname, lastname, email, username, id]
+    );
+  } catch (error) {
+    console.error(error);
+
+    let errorMessage = "An unexpected error occurred (Error code: CU001)";
+
+    if (error?.code === constants.DUPLICATE_KEY_ERROR) {
+      switch (error?.constraint) {
+        case "user_username_un":
+          errorMessage = "Username already registered";
+          break;
+        case "user_email_un":
+          errorMessage = "Email already registered";
+          break;
+        default:
+          errorMessage = "An unexpected error occurred (Error code: CU002)";
+          break;
+      }
+    }
+
+    throw new ApiError(httpStatus.BAD_REQUEST, errorMessage);
+  }
 
   res.status(httpStatus.OK).send(`User modified with ID: ${id}`);
 };
