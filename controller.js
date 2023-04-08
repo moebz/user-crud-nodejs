@@ -14,6 +14,13 @@ const {
 } = require("./validator");
 const ApiError = require("./classes/ApiError");
 
+const baseValidationFields = {
+  firstname: JoiLib.string().required().label("First name"),
+  lastname: JoiLib.string().required().label("Last name"),
+  email: JoiLib.string().required().email().label("Email"),
+  username: JoiLib.string().required().label("Username"),
+};
+
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
@@ -140,8 +147,8 @@ const createUser = async (req, res) => {
   // }
 
   const validationFields = {
-    email: JoiLib.string().email().label("Email"),
-    passwd: JoiLib.string().required().min(1).label("Password"),
+    ...baseValidationFields,
+    passwd: JoiLib.string().required().label("Password"),
     passwd_confirmation: JoiLib.any()
       .equal(JoiLib.ref("passwd"))
       .required()
@@ -382,6 +389,16 @@ const login = async (req, res) => {
 const updateUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { firstname, lastname, email, username } = req.body;
+
+  const validationFields = baseValidationFields;
+
+  // Renombrar 'error' de joi a 'joiErrors'
+  const { error: joiErrors } = validateRequest(req, validationFields);
+
+  if (joiErrors) {
+    const commaSeparatedErrors = getCommaSeparatedErrors(joiErrors);
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
+  }
 
   try {
     await req.dbClient.query(
