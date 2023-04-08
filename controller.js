@@ -5,6 +5,15 @@ const { v4: uuidv4 } = require("uuid");
 
 const helpers = require("./helpers");
 
+const constants = require("./constants");
+
+const {
+  JoiLib,
+  validateRequest,
+  getCommaSeparatedErrors,
+} = require("./validator");
+const ApiError = require("./classes/ApiError");
+
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
@@ -119,15 +128,33 @@ const createUser = async (req, res) => {
 
   const { firstname, lastname, email, username, passwd } = req.body;
 
-  if (
-    !username ||
-    typeof username !== "string" ||
-    !passwd ||
-    typeof passwd !== "string"
-  ) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "Username and password are required",
-    });
+  // if (
+  //   !username ||
+  //   typeof username !== "string" ||
+  //   !passwd ||
+  //   typeof passwd !== "string"
+  // ) {
+  //   return res.status(httpStatus.BAD_REQUEST).send({
+  //     message: "Username and password are required",
+  //   });
+  // }
+
+  const validationFields = {
+    email: JoiLib.string().email().label("Email"),
+    passwd: JoiLib.string().required().min(1).label("Password"),
+    passwd_confirmation: JoiLib.any()
+      .equal(JoiLib.ref("passwd"))
+      .required()
+      .label("Password confirmation")
+      .messages({ "any.only": "{{#label}} does not match" }),
+  };
+
+  // Renombrar 'error' de joi a 'joiErrors'
+  const { error: joiErrors } = validateRequest(req, validationFields);
+
+  if (joiErrors) {
+    const commaSeparatedErrors = getCommaSeparatedErrors(joiErrors);
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
   // console.log({
@@ -145,24 +172,48 @@ const createUser = async (req, res) => {
 
   const passwordHash = await helpers.hashPassword(passwd);
 
-  const results = await req.dbClient.query(
-    `INSERT INTO user_account (
-      firstname,
-      lastname,
-      email,
-      username,
-      passwd,
-      avatar_url
-    ) VALUES (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6
-    ) RETURNING *`,
-    [firstname, lastname, email, username, passwordHash, avatarUrl]
-  );
+  let results;
+
+  try {
+    results = await req.dbClient.query(
+      `INSERT INTO user_account (
+        firstname,
+        lastname,
+        email,
+        username,
+        passwd,
+        avatar_url
+      ) VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+      ) RETURNING *`,
+      [firstname, lastname, email, username, passwordHash, avatarUrl]
+    );
+  } catch (error) {
+    console.error(error);
+
+    let errorMessage = "An unexpected error occurred (Error code: CU001)";
+
+    if (error?.code === constants.DUPLICATE_KEY_ERROR) {
+      switch (error?.constraint) {
+        case "user_username_un":
+          errorMessage = "Username already registered";
+          break;
+        case "user_email_un":
+          errorMessage = "Email already registered";
+          break;
+        default:
+          errorMessage = "An unexpected error occurred (Error code: CU002)";
+          break;
+      }
+    }
+
+    throw new ApiError(httpStatus.BAD_REQUEST, errorMessage);
+  }
 
   const insertedId = results.rows[0].id;
 
