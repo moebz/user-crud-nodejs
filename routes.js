@@ -31,6 +31,17 @@ router.put(
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
 );
+// POST route to be able to update
+// receiving multipart form data
+// with a file. (Axios can't send
+// multipart form data in put nor patch)
+router.post(
+  "/users/:id/update",
+  middleware.verifyUserToken,
+  middleware.getDbClient,
+  wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
+  wrapMidd(controller.updateUser)
+);
 router.delete(
   "/users/:id",
   middleware.verifyUserToken,

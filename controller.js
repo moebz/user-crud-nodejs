@@ -127,24 +127,7 @@ const getUserById = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  // console.log({ "createUser.req": Object.getOwnPropertyNames(req) });
-
-  // return res.status(httpStatus.UNAUTHORIZED).send({
-  //   message: "Test error",
-  // });
-
   const { firstname, lastname, email, username, passwd } = req.body;
-
-  // if (
-  //   !username ||
-  //   typeof username !== "string" ||
-  //   !passwd ||
-  //   typeof passwd !== "string"
-  // ) {
-  //   return res.status(httpStatus.BAD_REQUEST).send({
-  //     message: "Username and password are required",
-  //   });
-  // }
 
   const validationFields = {
     ...baseValidationFields,
@@ -162,19 +145,6 @@ const createUser = async (req, res) => {
   if (joiErrors) {
     const commaSeparatedErrors = getCommaSeparatedErrors(joiErrors);
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
-  }
-
-  // console.log({
-  //   // request: request,
-  //   requestBody: req.body,
-  //   requestFile: req.file,
-  // });
-
-  let avatarUrl = null;
-
-  if (req?.file?.path) {
-    // console.log("there is a file in the request");
-    avatarUrl = req.file.path;
   }
 
   const passwordHash = await helpers.hashPassword(passwd);
@@ -198,7 +168,7 @@ const createUser = async (req, res) => {
         $5,
         $6
       ) RETURNING *`,
-      [firstname, lastname, email, username, passwordHash, avatarUrl]
+      [firstname, lastname, email, username, passwordHash, null]
     );
   } catch (error) {
     console.error(error);
@@ -224,7 +194,14 @@ const createUser = async (req, res) => {
 
   const insertedId = results.rows[0].id;
 
-  if (req?.file?.path) {
+  // Move avatar image
+  // from tmp dir to public dir
+  // and save the public path
+  // in the db.
+
+  const tmpUploadDirectory = req?.file?.path;
+
+  if (tmpUploadDirectory) {
     const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
 
     if (!fs.existsSync(userUploadDirectory)) {
@@ -234,6 +211,14 @@ const createUser = async (req, res) => {
     const fullNewFilepath = `${userUploadDirectory}${req.file.filename}`;
 
     fs.renameSync(req.file.path, fullNewFilepath);
+
+    await req.dbClient.query(
+      `UPDATE user_account SET
+      avatar_url = $1
+    WHERE
+      id = $2`,
+      [fullNewFilepath, insertedId]
+    );
   }
 
   return res
@@ -390,6 +375,8 @@ const updateUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { firstname, lastname, email, username } = req.body;
 
+  console.log("updateUser.req.body", req.body);
+
   const validationFields = baseValidationFields;
 
   // Renombrar 'error' de joi a 'joiErrors'
@@ -400,16 +387,34 @@ const updateUser = async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
+  const tmpUploadDirectory = req?.file?.path;
+  let avatarUrl = null;
+
+  if (tmpUploadDirectory) {
+    const userUploadDirectory = `public/uploads/avatar/${id}/`;
+
+    if (!fs.existsSync(userUploadDirectory)) {
+      fs.mkdirSync(userUploadDirectory, { recursive: true });
+    }
+
+    const fullNewFilepath = `${userUploadDirectory}${req.file.filename}`;
+
+    fs.renameSync(req.file.path, fullNewFilepath);
+
+    avatarUrl = fullNewFilepath;
+  }
+
   try {
     await req.dbClient.query(
       `UPDATE user_account SET
       firstname = $1,
       lastname = $2,
       email = $3,
-      username = $4
+      username = $4,
+      avatar_url = $5
     WHERE
-      id = $5`,
-      [firstname, lastname, email, username, id]
+      id = $6`,
+      [firstname, lastname, email, username, avatarUrl, id]
     );
   } catch (error) {
     console.error(error);
