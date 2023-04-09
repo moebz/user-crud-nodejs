@@ -16,9 +16,11 @@ router.get(
   middleware.getDbClient,
   wrapMidd(controller.getUserById)
 );
+
 router.post(
   "/users",
-  middleware.verifyUserToken,
+  middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.createUser)
@@ -26,7 +28,7 @@ router.post(
 router.post("/login", middleware.getDbClient, wrapMidd(controller.login));
 router.put(
   "/users/:id",
-  middleware.verifyUserToken,
+  middleware.verifyAccessToken,
   middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
@@ -37,14 +39,14 @@ router.put(
 // multipart form data in put nor patch)
 router.post(
   "/users/:id/update",
-  middleware.verifyUserToken,
+  middleware.verifyAccessToken,
   middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
 );
 router.delete(
   "/users/:id",
-  middleware.verifyUserToken,
+  middleware.verifyAccessToken,
   middleware.getDbClient,
   wrapMidd(controller.deleteUser)
 );

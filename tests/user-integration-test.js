@@ -4,10 +4,10 @@ const httpStatus = require("http-status");
 const app = require("../index");
 const helpers = require("../helpers");
 
-async function postUser(req, userToken) {
+async function postUser(req, accessToken) {
   const { body } = await request(app)
     .post("/users")
-    .set("user-token", userToken)
+    .set("access-token", accessToken)
     .send(req)
     .expect(httpStatus.CREATED);
   return body;
@@ -29,7 +29,7 @@ const { db } = require("../database");
 
 describe("Integration: UserController", () => {
   let client;
-  let userToken;
+  let accessToken;
   let existingTestUserAndPassword;
 
   before("Load app", async () => {
@@ -70,7 +70,7 @@ describe("Integration: UserController", () => {
   beforeEach("Login to get auth token", async () => {
     const req = existingTestUserAndPassword;
     const { body } = await request(app).post("/login").send(req);
-    userToken = body.data.userToken;
+    accessToken = body.data.accessToken;
   });
 
   describe("POST /users", () => {
@@ -82,7 +82,7 @@ describe("Integration: UserController", () => {
         username: uniqueUsername,
         passwd: "123456",
       };
-      await postUser(req, userToken);
+      await postUser(req, accessToken);
 
       const { rows } = await client.query(
         "SELECT firstname, username FROM user_account WHERE username = $1",
@@ -109,7 +109,7 @@ describe("Integration: UserController", () => {
       const res = await request(app)
         .post("/users")
         .set("Accept", "application/json; charset=utf-8")
-        .set("user-token", userToken)
+        .set("access-token", accessToken)
         .field("Content-Type", "multipart/form-data")
         .field("firstname", mockUser.firstname)
         .field("lastname", mockUser.lastname)
@@ -137,7 +137,7 @@ describe("Integration: UserController", () => {
       const res = await request(app)
         .post("/users")
         .set("Accept", "application/json; charset=utf-8")
-        .set("user-token", userToken)
+        .set("access-token", accessToken)
         .field("Content-Type", "multipart/form-data")
         .field("firstname", mockUser.firstname)
         .field("lastname", mockUser.lastname)

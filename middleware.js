@@ -6,17 +6,18 @@ const httpStatus = require("http-status");
 
 require("dotenv").config();
 const { db } = require("./database");
+const ApiError = require("./classes/ApiError");
 
 // console.log = function () {};
 
 const { JWT_SECRET } = process.env;
 
-const verifyUserToken = async (request, response, next) => {
+const verifyAccessToken = async (request, response, next) => {
   try {
     const token =
-      request.headers["user-token"] ||
-      request.body.userToken ||
-      request.query.userToken;
+      request.headers["access-token"] ||
+      request.body.accessToken ||
+      request.query.accessToken;
 
     if (!token) {
       return response
@@ -24,9 +25,13 @@ const verifyUserToken = async (request, response, next) => {
         .send({ message: "No user token provided." });
     }
 
+    console.log("verifyAccessToken.rawToken", token);
+
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    request.decodedUserToken = decoded;
+    console.log("verifyAccessToken.decoded", decoded);
+
+    request.decodedAccessToken = decoded;
 
     return next();
   } catch (err) {
@@ -102,8 +107,18 @@ const getDbClient = async (req, res, next) => {
   next();
 };
 
+// Returns a middleware that will throw an error
+// if the user role isn't included in the allowedRoles list.
+const allowOnlyTheseRoles = (allowedRoles) => (req, res, next) => {
+  if (!allowedRoles || !allowedRoles.includes(req.decodedAccessToken.role)) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Access restricted");
+  }
+  next();
+};
+
 module.exports = {
-  verifyUserToken,
+  verifyAccessToken,
   fileUploadHandler,
   getDbClient,
+  allowOnlyTheseRoles,
 };

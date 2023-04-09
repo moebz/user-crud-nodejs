@@ -127,7 +127,7 @@ const getUserById = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  const { firstname, lastname, email, username, passwd } = req.body;
+  const { firstname, lastname, email, username, passwd, role } = req.body;
 
   const validationFields = {
     ...baseValidationFields,
@@ -159,16 +159,18 @@ const createUser = async (req, res) => {
         email,
         username,
         passwd,
-        avatar_url
+        avatar_url,
+        role
       ) VALUES (
         $1,
         $2,
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7
       ) RETURNING *`,
-      [firstname, lastname, email, username, passwordHash, null]
+      [firstname, lastname, email, username, passwordHash, null, role]
     );
   } catch (error) {
     console.error(error);
@@ -333,6 +335,8 @@ const login = async (req, res) => {
 
   const user = result?.rows?.[0];
 
+  console.log("login.user", user);
+
   if (!user) {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: `${errorMessage}`,
@@ -353,9 +357,10 @@ const login = async (req, res) => {
     email: user.email,
     firstname: user.firstname,
     lastname: user.lastname,
+    role: user.role,
   };
 
-  const userToken = getSignedJwt({
+  const accessToken = getSignedJwt({
     tokenPayload,
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRATION,
@@ -365,7 +370,7 @@ const login = async (req, res) => {
 
   return res.status(httpStatus.OK).send({
     data: {
-      userToken,
+      accessToken,
       refreshToken,
     },
   });
@@ -419,7 +424,7 @@ const updateUser = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    let errorMessage = "An unexpected error occurred (Error code: CU001)";
+    let errorMessage = "An unexpected error occurred (Error code: UU001)";
 
     if (error?.code === constants.DUPLICATE_KEY_ERROR) {
       switch (error?.constraint) {
