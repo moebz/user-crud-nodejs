@@ -9,14 +9,13 @@ router.get("/ping", (req, res) => {
   console.log("ping");
   return res.send("ping response");
 });
-
+router.post("/login", middleware.getDbClient, wrapMidd(controller.login));
 router.get("/users", middleware.getDbClient, wrapMidd(controller.getUsers));
 router.get(
   "/users/:id",
   middleware.getDbClient,
   wrapMidd(controller.getUserById)
 );
-
 router.post(
   "/users",
   middleware.verifyAccessToken,
@@ -25,10 +24,10 @@ router.post(
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.createUser)
 );
-router.post("/login", middleware.getDbClient, wrapMidd(controller.login));
 router.put(
   "/users/:id",
   middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
@@ -40,6 +39,7 @@ router.put(
 router.post(
   "/users/:id/update",
   middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   middleware.getDbClient,
   wrapMidd(middleware.fileUploadHandler, { disconnectFromDb: false }),
   wrapMidd(controller.updateUser)
@@ -47,6 +47,7 @@ router.post(
 router.delete(
   "/users/:id",
   middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   middleware.getDbClient,
   wrapMidd(controller.deleteUser)
 );

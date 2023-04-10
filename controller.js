@@ -86,7 +86,7 @@ const getUsers = async (req, res) => {
 
   const query = `
     SELECT
-      id, firstname, lastname, email, username, passwd, avatar_url
+      id, firstname, lastname, email, username, role, avatar_url
     FROM
       user_account
     ${whereClause}
@@ -378,7 +378,7 @@ const login = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { firstname, lastname, email, username } = req.body;
+  const { firstname, lastname, email, username, role } = req.body;
 
   console.log("updateUser.req.body", req.body);
 
@@ -416,10 +416,11 @@ const updateUser = async (req, res) => {
       lastname = $2,
       email = $3,
       username = $4,
-      avatar_url = $5
+      avatar_url = $5,
+      role = $6
     WHERE
-      id = $6`,
-      [firstname, lastname, email, username, avatarUrl, id]
+      id = $7`,
+      [firstname, lastname, email, username, avatarUrl, role, id]
     );
   } catch (error) {
     console.error(error);
