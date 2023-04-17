@@ -21,6 +21,15 @@ const baseValidationFields = {
   username: JoiLib.string().required().label("Username"),
 };
 
+const getAccessTokenPayload = (user) => ({
+  id: user.id,
+  username: user.username,
+  email: user.email,
+  firstname: user.firstname,
+  lastname: user.lastname,
+  role: user.role,
+});
+
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
@@ -351,14 +360,7 @@ const login = async (req, res) => {
     });
   }
 
-  const tokenPayload = {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    firstname: user.firstname,
-    lastname: user.lastname,
-    role: user.role,
-  };
+  const tokenPayload = getAccessTokenPayload(user);
 
   const accessToken = getSignedJwt({
     tokenPayload,
@@ -518,11 +520,24 @@ const doRefreshToken = async (req, res) => {
     });
   }
 
-  const userId = refreshToken.user_id;
+  const userId = refreshTokenData.user_account_id;
 
-  const tokenPayload = {
-    id: userId,
-  };
+  const result = await req.dbClient.query(
+    "SELECT * FROM user_account WHERE id = $1",
+    [userId]
+  );
+
+  const user = result?.rows?.[0];
+
+  if (!user) {
+    return res.status(httpStatus.BAD_REQUEST).send({
+      message: "There was an error processing your request. Error code: RT003",
+    });
+  }
+
+  console.log("doRefreshToken.user", user);
+
+  const tokenPayload = getAccessTokenPayload(user);
 
   const newAccessToken = getSignedJwt({
     tokenPayload,
