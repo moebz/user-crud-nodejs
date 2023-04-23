@@ -3,9 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const cors = require("cors");
-const routes = require("./routes");
-const NotFoundError = require("./classes/NotFoundError");
-const { errorHandler } = require("./helpers");
+const routes = require("./src/user/routes");
+const NotFoundError = require("./src/common/classes/NotFoundError");
+const { errorHandler } = require("./src/common/helpers");
 
 const app = express();
 const port = 4000;

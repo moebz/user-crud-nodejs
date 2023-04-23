@@ -1,10 +1,10 @@
 const router = require("express").Router();
 
-const middleware = require("./middleware");
-const authController = require("./auth/controller");
+const middleware = require("../common/middleware");
+const authController = require("../auth/controller");
 const controller = require("./controller");
 
-const { wrapMidd } = require("./helpers");
+const { wrapMidd } = require("../common/helpers");
 
 router.get("/ping", (req, res) => {
   console.log("ping");

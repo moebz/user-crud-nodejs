@@ -1,16 +1,16 @@
 const httpStatus = require("http-status");
 const fs = require("fs");
 
-const { hashPassword } = require("./auth/helpers");
+const { hashPassword } = require("../auth/helpers");
 
-const constants = require("./constants");
+const constants = require("../common/constants");
 
 const {
   JoiLib,
   validateRequest,
   getCommaSeparatedErrors,
-} = require("./validator");
-const ApiError = require("./classes/ApiError");
+} = require("../common/validator");
+const ApiError = require("../common/classes/ApiError");
 
 const baseValidationFields = {
   firstname: JoiLib.string().required().label("First name"),
