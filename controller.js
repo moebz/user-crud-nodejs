@@ -1,7 +1,5 @@
 const httpStatus = require("http-status");
-const jwt = require("jsonwebtoken");
 const fs = require("fs");
-const { v4: uuidv4 } = require("uuid");
 
 const { hashPassword } = require("./auth/helpers");
 

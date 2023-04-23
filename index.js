@@ -3,10 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const cors = require("cors");
-const path = require("path");
 const routes = require("./routes");
 const NotFoundError = require("./classes/NotFoundError");
-const { getErrorHandler } = require("./helpers");
+const { errorHandler } = require("./helpers");
 
 const app = express();
 const port = 4000;
@@ -25,7 +24,7 @@ app.use("*", (req, res, next) => {
 });
 
 // Error handler
-app.use(getErrorHandler());
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`);

@@ -35,27 +35,24 @@ const wrapMidd = (fn, config) => {
   };
 };
 
-const getErrorHandler =
-  () =>
-  // eslint-disable-next-line no-unused-vars
-  async (err, req, res, next) => {
-    console.log("mainErrorHandler.err", err);
+const errorHandler = async (err, req, res, next) => {
+  console.log("mainErrorHandler.err", err);
 
-    // if (req.dbClient) {
-    //   dbClient.release();
-    // }
+  // if (req.dbClient) {
+  //   dbClient.release();
+  // }
 
-    // If it is an instance of 'ApiError'
-    // it could contain statusCode.
-    const statusCode = err.statusCode || httpStatus.INTERNAL_SERVER_ERROR;
+  // If it is an instance of 'ApiError'
+  // it could contain statusCode.
+  const statusCode = err.statusCode || httpStatus.INTERNAL_SERVER_ERROR;
 
-    res.status(statusCode).send({
-      message: err.message,
-      // stack: err.stack,
-    });
-  };
+  res.status(statusCode).send({
+    message: err.message,
+    // stack: err.stack,
+  });
+};
 
 module.exports = {
   wrapMidd,
-  getErrorHandler,
+  errorHandler,
 };
