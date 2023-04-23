@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 
-const helpers = require("./helpers");
+const { hashPassword } = require("./auth/helpers");
 
 const constants = require("./constants");
 
@@ -20,16 +20,6 @@ const baseValidationFields = {
   email: JoiLib.string().required().email().label("Email"),
   username: JoiLib.string().required().label("Username"),
 };
-
-const getAccessTokenPayload = (user) => ({
-  id: user.id,
-  username: user.username,
-  email: user.email,
-  firstname: user.firstname,
-  lastname: user.lastname,
-  role: user.role,
-});
-
 // console.log = function () {};
 
 const getUsers = async (req, res) => {
@@ -156,7 +146,7 @@ const createUser = async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
-  const passwordHash = await helpers.hashPassword(passwd);
+  const passwordHash = await hashPassword(passwd);
 
   let results;
 
@@ -235,147 +225,6 @@ const createUser = async (req, res) => {
   return res
     .status(httpStatus.CREATED)
     .send({ message: `User added with ID: ${insertedId}` });
-};
-
-// TODO: mover
-const getSignedJwt = ({ tokenPayload, secret, expiresIn }) => {
-  const tokenOptions = {
-    expiresIn,
-  };
-  return jwt.sign(tokenPayload, secret, tokenOptions);
-};
-
-const storeRefreshToken = async ({
-  dbClient,
-  tokenValue,
-  expiryDate,
-  userAccountId,
-}) => {
-  const results = await dbClient.query(
-    `INSERT INTO refresh_token (
-      token_value,
-      expiry_date,
-      user_account_id
-    ) VALUES (
-      $1,
-      $2,
-      $3
-    ) RETURNING *`,
-    [tokenValue, expiryDate, userAccountId]
-  );
-
-  const refreshTokenData = results.rows[0];
-
-  return refreshTokenData;
-};
-
-const createRefreshToken = async (dbClient, userAccountId) => {
-  const expiredAt = new Date();
-
-  console.log("createRefreshToken.expiredAt.before", expiredAt);
-
-  const secondsToAdd = parseInt(
-    process.env.REFRESH_TOKEN_EXPIRATION_SECONDS,
-    10
-  );
-
-  const currentSeconds = expiredAt.getSeconds();
-
-  const secondsToSet = currentSeconds + secondsToAdd;
-
-  console.log({
-    secondsToAdd,
-    currentSeconds,
-    secondsToSet,
-  });
-
-  expiredAt.setSeconds(secondsToSet);
-
-  console.log("createRefreshToken.expiredAt.after", expiredAt);
-  console.log(
-    "createRefreshToken.expiredAt.toISOString",
-    expiredAt.toISOString()
-  );
-
-  const tokenValue = uuidv4();
-
-  const refreshTokenData = {
-    dbClient,
-    tokenValue,
-    userAccountId,
-    expiryDate: expiredAt.toISOString(),
-  };
-
-  console.log({
-    tokenValue,
-    userAccountId,
-    expiryDate: expiredAt.toISOString(),
-  });
-
-  await storeRefreshToken(refreshTokenData);
-
-  return tokenValue;
-};
-
-const login = async (req, res) => {
-  const { username, passwd } = req.body;
-
-  if (
-    !username ||
-    typeof username !== "string" ||
-    !passwd ||
-    typeof passwd !== "string"
-  ) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "Username and password are required",
-    });
-  }
-
-  // console.log({ username, passwd });
-
-  const errorMessage = `Username or password not valid`;
-
-  const result = await req.dbClient.query(
-    "SELECT * FROM user_account WHERE username = $1",
-    [username]
-  );
-
-  // console.log({ result });
-
-  const user = result?.rows?.[0];
-
-  console.log("login.user", user);
-
-  if (!user) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: `${errorMessage}`,
-    });
-  }
-
-  const loginResult = await helpers.comparePasswords(passwd, user.passwd);
-
-  if (!loginResult) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: `${errorMessage}`,
-    });
-  }
-
-  const tokenPayload = getAccessTokenPayload(user);
-
-  const accessToken = getSignedJwt({
-    tokenPayload,
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-
-  const refreshToken = await createRefreshToken(req.dbClient, user.id);
-
-  return res.status(httpStatus.OK).send({
-    data: {
-      accessToken,
-      refreshToken,
-    },
-  });
 };
 
 const updateUser = async (req, res) => {
@@ -457,105 +306,10 @@ const deleteUser = async (req, res) => {
   res.status(httpStatus.OK).send(`User deleted with ID: ${id}`);
 };
 
-const isRefreshTokenExpired = (tokenData) => {
-  const nowDate = new Date();
-  console.log("isRefreshTokenExpired.tokenData", tokenData);
-  const expiryDate = new Date(tokenData.expiry_date);
-  const comparisonResult = expiryDate.getTime() < nowDate.getTime();
-  console.log("isRefreshTokenExpired.expiryDate", expiryDate);
-  console.log("isRefreshTokenExpired.nowDate", nowDate);
-  console.log("isRefreshTokenExpired.comparisonResult", comparisonResult);
-  return comparisonResult;
-};
-
-const getRefreshTokenData = async ({ dbClient, refreshToken }) => {
-  const result = await dbClient.query(
-    "SELECT * FROM refresh_token WHERE token_value = $1",
-    [refreshToken]
-  );
-
-  const refreshTokenData = result?.rows?.[0];
-
-  return refreshTokenData;
-};
-
-const deleteRefreshToken = async ({ dbClient, refreshToken }) => {
-  await dbClient.query(
-    `DELETE FROM refresh_token
-    WHERE token_value = $1`,
-    [refreshToken]
-  );
-};
-
-const doRefreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
-
-  if (refreshToken == null) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "There was an error processing your request. Error code: RT001",
-    });
-  }
-
-  const refreshTokenData = await getRefreshTokenData({
-    dbClient: req.dbClient,
-    refreshToken,
-  });
-
-  console.log(refreshTokenData);
-
-  if (!refreshTokenData) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "There was an error processing your request. Error code: RT002",
-    });
-  }
-
-  if (isRefreshTokenExpired(refreshTokenData)) {
-    deleteRefreshToken({
-      dbClient: req.dbClient,
-      refreshToken: refreshTokenData.id,
-    });
-
-    return res.status(httpStatus.FORBIDDEN).send({
-      message: "Refresh token has expired",
-    });
-  }
-
-  const userId = refreshTokenData.user_account_id;
-
-  const result = await req.dbClient.query(
-    "SELECT * FROM user_account WHERE id = $1",
-    [userId]
-  );
-
-  const user = result?.rows?.[0];
-
-  if (!user) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "There was an error processing your request. Error code: RT003",
-    });
-  }
-
-  console.log("doRefreshToken.user", user);
-
-  const tokenPayload = getAccessTokenPayload(user);
-
-  const newAccessToken = getSignedJwt({
-    tokenPayload,
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-
-  return res.status(httpStatus.OK).json({
-    accessToken: newAccessToken,
-  });
-};
-
 module.exports = {
   getUsers,
   getUserById,
   createUser,
-  login,
   updateUser,
   deleteUser,
-  doRefreshToken,
 };
