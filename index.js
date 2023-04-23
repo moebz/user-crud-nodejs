@@ -3,7 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const cors = require("cors");
-const routes = require("./src/user/routes");
+const routes = require("./src/routes");
 const NotFoundError = require("./src/common/classes/NotFoundError");
 const { errorHandler } = require("./src/common/helpers");
 
