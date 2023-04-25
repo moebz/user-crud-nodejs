@@ -1,16 +1,12 @@
 const httpStatus = require("http-status");
-const fs = require("fs");
 
 const { hashPassword } = require("../auth/helpers");
 
-const {
-  JoiLib,
-  validateRequest,
-  getCommaSeparatedErrors,
-} = require("../common/validator");
+const { JoiLib, validate } = require("../common/validator");
 const ApiError = require("../common/classes/ApiError");
 
 const { userModel } = require("./model");
+const { storeAvatarFile } = require("./helpers");
 
 const baseValidationFields = {
   firstname: JoiLib.string().required().label("First name"),
@@ -18,7 +14,6 @@ const baseValidationFields = {
   email: JoiLib.string().required().email().label("Email"),
   username: JoiLib.string().required().label("Username"),
 };
-// console.log = function () {};
 
 const getUsers = async (req, res) => {
   const { pageSize, pageNumber, orderBy, orderDirection, filter } = req.query;
@@ -34,7 +29,7 @@ const getUsers = async (req, res) => {
     filter,
   });
 
-  res.status(httpStatus.OK).json({
+  res.status(httpStatus.OK).send({
     data: {
       rows: result.rows,
       total: result.total,
@@ -50,7 +45,7 @@ const getUserById = async (req, res) => {
     id,
   });
 
-  res.status(httpStatus.OK).json({ data: result.rows, message: null });
+  res.status(httpStatus.OK).send({ data: result.rows, message: null });
 };
 
 const createUser = async (req, res) => {
@@ -66,11 +61,12 @@ const createUser = async (req, res) => {
       .messages({ "any.only": "{{#label}} does not match" }),
   };
 
-  // Renombrar 'error' de joi a 'joiErrors'
-  const { error: joiErrors } = validateRequest(req, validationFields);
+  const { joiErrors, commaSeparatedErrors } = validate(
+    req.body,
+    validationFields
+  );
 
   if (joiErrors) {
-    const commaSeparatedErrors = getCommaSeparatedErrors(joiErrors);
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
@@ -93,22 +89,15 @@ const createUser = async (req, res) => {
   // and save the public path
   // in the db.
 
-  const tmpUploadDirectory = req?.file?.path;
-
-  if (tmpUploadDirectory) {
-    const userUploadDirectory = `public/uploads/avatar/${insertedId}/`;
-
-    if (!fs.existsSync(userUploadDirectory)) {
-      fs.mkdirSync(userUploadDirectory, { recursive: true });
-    }
-
-    const fullNewFilepath = `${userUploadDirectory}${req.file.filename}`;
-
-    fs.renameSync(req.file.path, fullNewFilepath);
+  if (req.file) {
+    const filepath = storeAvatarFile({
+      file: req.file,
+      userId: insertedId,
+    });
 
     await userModel.update({
       dbClient: req.dbClient,
-      avatarUrl: fullNewFilepath,
+      avatarUrl: filepath,
       id: insertedId,
     });
   }
@@ -126,30 +115,19 @@ const updateUser = async (req, res) => {
 
   const validationFields = baseValidationFields;
 
-  // Renombrar 'error' de joi a 'joiErrors'
-  const { error: joiErrors } = validateRequest(req, validationFields);
+  const { joiErrors, commaSeparatedErrors } = validate(
+    req.body,
+    validationFields
+  );
 
   if (joiErrors) {
-    const commaSeparatedErrors = getCommaSeparatedErrors(joiErrors);
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
-  const tmpUploadDirectory = req?.file?.path;
-
   let avatarUrl = null;
 
-  if (tmpUploadDirectory) {
-    const userUploadDirectory = `public/uploads/avatar/${id}/`;
-
-    if (!fs.existsSync(userUploadDirectory)) {
-      fs.mkdirSync(userUploadDirectory, { recursive: true });
-    }
-
-    const fullNewFilepath = `${userUploadDirectory}${req.file.filename}`;
-
-    fs.renameSync(req.file.path, fullNewFilepath);
-
-    avatarUrl = fullNewFilepath;
+  if (req.file) {
+    avatarUrl = storeAvatarFile({ file: req.file, userId: id });
   }
 
   await userModel.update({

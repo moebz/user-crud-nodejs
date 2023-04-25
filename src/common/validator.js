@@ -11,21 +11,6 @@ const Joi = require("joi").defaults((schema) =>
 
 const JoiLib = Joi.extend(JoiDate);
 
-const validateRequest = (req, validationFields) => {
-  const validationConfig = {
-    abortEarly: false, // include all errors
-    allowUnknown: true, // ignore unknown props
-    stripUnknown: false, // false: don't remove unknown props
-  };
-  const validationSchema = JoiLib.object(validationFields);
-  const { error, value } = validationSchema.validate(
-    req.body,
-    validationConfig
-  );
-  console.log({ error, value });
-  return { error, value };
-};
-
 const getCommaSeparatedErrors = (joiErrors) => {
   let msg = "Validation errors: ";
   joiErrors.details.forEach((error) => console.log(error));
@@ -38,28 +23,27 @@ const getCommaSeparatedErrors = (joiErrors) => {
   return msg;
 };
 
-const validate = (req, validationFields) => {
+const validate = (fields, validationFields) => {
   const validationConfig = {
     abortEarly: false, // include all errors
     allowUnknown: true, // ignore unknown props
     stripUnknown: false, // false: don't remove unknown props
   };
-  const validationSchema = JoiLib.object(validationFields);
-  const { error, value } = validationSchema.validate(req, validationConfig);
-  console.log({ error, value });
 
-  let errorsText = null;
+  const validationSchema = JoiLib.object(validationFields);
+
+  const { error, value } = validationSchema.validate(fields, validationConfig);
+
+  let commaSeparatedErrors = null;
+
   if (error) {
-    errorsText = getCommaSeparatedErrors(error);
+    commaSeparatedErrors = getCommaSeparatedErrors(error);
   }
-  return { error, value, errorsText };
+
+  return { joiErrors: error, value, commaSeparatedErrors };
 };
 
 module.exports = {
-  validateRequest,
-  getCommaSeparatedErrors,
   JoiLib,
-  joi: {
-    validate,
-  },
+  validate,
 };
