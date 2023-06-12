@@ -31,6 +31,14 @@ const verifyAccessToken = async (request, response, next) => {
 
     console.log("verifyAccessToken.decoded", decoded);
 
+    if (!decoded?.role) {
+      // The access token must have a role field.
+      // This verification is needed just in case a malicious user
+      // tries to use the refresh token as an
+      // access token.
+      throw new Error("There was an error while processing the token");
+    }
+
     request.decodedAccessToken = decoded;
 
     return next();

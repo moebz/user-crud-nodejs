@@ -6,8 +6,9 @@ const {
   createRefreshToken,
   getSignedJwt,
   getRefreshTokenData,
-  isRefreshTokenExpired,
+  verifyToken,
   deleteRefreshToken,
+  getErrorMessageByErrorName,
 } = require("./helpers");
 
 const login = async (req, res) => {
@@ -87,20 +88,28 @@ const doRefreshToken = async (req, res) => {
 
   console.log(refreshTokenData);
 
+  // If there is no matching token in the DB
+  // then the token was deleted manually or
+  // it was deleted in this function
+  // in a previous call
+  // because it was not valid anymore.
+
   if (!refreshTokenData) {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: "There was an error processing your request. Error code: RT002",
     });
   }
 
-  if (isRefreshTokenExpired(refreshTokenData)) {
+  const verifResult = verifyToken(refreshTokenData.token_value);
+
+  if (!verifResult.isValid) {
     deleteRefreshToken({
       dbClient: req.dbClient,
       refreshToken: refreshTokenData.id,
     });
 
     return res.status(httpStatus.FORBIDDEN).send({
-      message: "Refresh token has expired",
+      message: getErrorMessageByErrorName(verifResult.errorName),
     });
   }
 

@@ -3,24 +3,25 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const constants = require("../common/constants");
 
-const storeRefreshToken = async ({
-  dbClient,
-  tokenValue,
-  expiryDate,
-  userAccountId,
-}) => {
+const getSignedJwt = ({ tokenPayload, secret, expiresIn }) => {
+  const tokenOptions = {
+    expiresIn,
+  };
+  return jwt.sign(tokenPayload, secret, tokenOptions);
+};
+
+const storeRefreshToken = async ({ dbClient, tokenValue, userAccountId }) => {
   const results = await dbClient.query(
     `INSERT INTO refresh_token (
       token_value,
-      expiry_date,
       user_account_id
     ) VALUES (
       $1,
-      $2,
-      $3
+      $2
     ) RETURNING *`,
-    [tokenValue, expiryDate, userAccountId]
+    [tokenValue, userAccountId]
   );
 
   const refreshTokenData = results.rows[0];
@@ -29,51 +30,30 @@ const storeRefreshToken = async ({
 };
 
 const createRefreshToken = async (dbClient, userAccountId) => {
-  const expiredAt = new Date();
+  const refreshTokenPayload = {
+    id: userAccountId,
+  };
 
-  console.log("createRefreshToken.expiredAt.before", expiredAt);
-
-  const secondsToAdd = parseInt(
-    process.env.REFRESH_TOKEN_EXPIRATION_SECONDS,
-    10
-  );
-
-  const currentSeconds = expiredAt.getSeconds();
-
-  const secondsToSet = currentSeconds + secondsToAdd;
-
-  console.log({
-    secondsToAdd,
-    currentSeconds,
-    secondsToSet,
+  const refreshTokenValue = getSignedJwt({
+    tokenPayload: refreshTokenPayload,
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRATION,
   });
-
-  expiredAt.setSeconds(secondsToSet);
-
-  console.log("createRefreshToken.expiredAt.after", expiredAt);
-  console.log(
-    "createRefreshToken.expiredAt.toISOString",
-    expiredAt.toISOString()
-  );
-
-  const tokenValue = uuidv4();
 
   const refreshTokenData = {
     dbClient,
-    tokenValue,
+    tokenValue: refreshTokenValue,
     userAccountId,
-    expiryDate: expiredAt.toISOString(),
   };
 
   console.log({
-    tokenValue,
+    refreshTokenValue,
     userAccountId,
-    expiryDate: expiredAt.toISOString(),
   });
 
   await storeRefreshToken(refreshTokenData);
 
-  return tokenValue;
+  return refreshTokenValue;
 };
 
 const getAccessTokenPayload = (user) => ({
@@ -85,22 +65,46 @@ const getAccessTokenPayload = (user) => ({
   role: user.role,
 });
 
-const getSignedJwt = ({ tokenPayload, secret, expiresIn }) => {
-  const tokenOptions = {
-    expiresIn,
-  };
-  return jwt.sign(tokenPayload, secret, tokenOptions);
+/**
+ * Check if the token was signed
+ * by this backend app and if it
+ * isn't expired.
+ * @param {*} tokenData
+ * @returns
+ */
+const verifyToken = (tokenData) => {
+  try {
+    jwt.verify(tokenData, process.env.JWT_SECRET);
+    return {
+      isValid: true,
+    };
+  } catch (error) {
+    if (error.name !== constants.TOKEN_EXPIRED_ERROR) {
+      // Tokens will expire eventually and I won't log those errors.
+      // But, if there are other errors, that may be
+      // and indication of malicious activity, so I will log those.
+
+      console.log(error);
+    }
+
+    return {
+      isValid: false,
+      errorName: error.name,
+    };
+  }
 };
 
-const isRefreshTokenExpired = (tokenData) => {
-  const nowDate = new Date();
-  console.log("isRefreshTokenExpired.tokenData", tokenData);
-  const expiryDate = new Date(tokenData.expiry_date);
-  const comparisonResult = expiryDate.getTime() < nowDate.getTime();
-  console.log("isRefreshTokenExpired.expiryDate", expiryDate);
-  console.log("isRefreshTokenExpired.nowDate", nowDate);
-  console.log("isRefreshTokenExpired.comparisonResult", comparisonResult);
-  return comparisonResult;
+const getErrorMessageByErrorName = (errorName) => {
+  let errorMessage = "Refresh token has expired";
+
+  if (errorName !== constants.TOKEN_EXPIRED_ERROR) {
+    // The token is invalid. The error will be something general.
+
+    errorMessage =
+      "There was an error processing your request. Error code: RT004";
+  }
+
+  return errorMessage;
 };
 
 const getRefreshTokenData = async ({ dbClient, refreshToken }) => {
@@ -141,7 +145,8 @@ module.exports = {
   comparePasswords,
   createRefreshToken,
   getSignedJwt,
-  isRefreshTokenExpired,
+  verifyToken,
   getRefreshTokenData,
   deleteRefreshToken,
+  getErrorMessageByErrorName,
 };
