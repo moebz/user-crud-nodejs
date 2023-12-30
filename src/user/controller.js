@@ -6,7 +6,7 @@ const { JoiLib, validate } = require("../common/validator");
 const ApiError = require("../common/classes/ApiError");
 
 const { userModel } = require("./model");
-const { storeAvatarFile } = require("./helpers");
+const { storeAvatarFile, deleteAvatarFile } = require("./helpers");
 
 const baseValidationFields = {
   firstname: JoiLib.string().required().label("First name"),
@@ -128,7 +128,11 @@ const updateUser = async (req, res) => {
 
   if (req.file) {
     avatarUrl = storeAvatarFile({ file: req.file, userId: id });
+  } else if (req.body.deleteavatar) {
+    await deleteAvatarFile({ userModel, dbClient: req.dbClient, userId: id });
   }
+
+  // throw new Error("prueba");
 
   await userModel.update({
     dbClient: req.dbClient,
