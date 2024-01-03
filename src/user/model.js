@@ -1,17 +1,14 @@
 const httpStatus = require("http-status");
 const constants = require("../common/constants");
 const ApiError = require("../common/classes/ApiError");
+const { knex } = require("../common/database");
 
-const getById = async ({ dbClient, id }) => {
-  const result = await dbClient.query(
-    "SELECT * FROM user_account WHERE id = $1",
-    [id]
-  );
+const getById = async ({ id }) => {
+  const result = await knex("user_account").where("id", id).first();
   return result;
 };
 
 const get = async ({
-  dbClient,
   pageNumber,
   pageSize,
   filter,
@@ -32,78 +29,36 @@ const get = async ({
     throw new Error("Order direction not valid");
   }
 
-  const allParams = [pageNumber, pageSize];
-  const paramsForCount = [];
-
   if (!pageSize || !pageNumber) {
     throw new Error("Page size and page number are required");
   }
 
-  const whereClauseItems = [];
-  const whereClauseItemsForCount = [];
+  const query = knex("user_account");
 
   if (filter) {
-    const nextParamPosition = allParams.length + 1;
-    const nextParamForCountPosition = paramsForCount.length + 1;
-
-    allParams.push(`%${filter}%`);
-    paramsForCount.push(`%${filter}%`);
-
-    whereClauseItems.push(`firstname ILIKE $${nextParamPosition}`);
-    whereClauseItemsForCount.push(
-      `firstname ILIKE $${nextParamForCountPosition}`
-    );
-
-    whereClauseItems.push(`lastname ILIKE $${nextParamPosition}`);
-    whereClauseItemsForCount.push(
-      `lastname ILIKE $${nextParamForCountPosition}`
-    );
-
-    whereClauseItems.push(`email ILIKE $${nextParamPosition}`);
-    whereClauseItemsForCount.push(`email ILIKE $${nextParamForCountPosition}`);
-
-    whereClauseItems.push(`username ILIKE $${nextParamPosition}`);
-    whereClauseItemsForCount.push(
-      `username ILIKE $${nextParamForCountPosition}`
-    );
+    query.whereILike("firstname", `%${filter}%`);
+    query.orWhereILike("lastname", `%${filter}%`);
+    query.orWhereILike("email", `%${filter}%`);
+    query.orWhereILike("username", `%${filter}%`);
   }
 
-  let whereClause = whereClauseItems.join(" OR ");
+  const countResult = await query.clone().count("* as count").first();
 
-  whereClause = whereClause ? `WHERE ${whereClause}` : "";
+  query.orderBy([{ column: mOrderBy, order: mOrderDirection }]);
+  query.limit(pageSize);
+  query.offset((pageNumber - 1) * pageSize);
 
-  const orderClause = `ORDER BY ${mOrderBy} ${mOrderDirection}`;
+  const queryResult = await query;
 
-  const query = `
-    SELECT
-      id, firstname, lastname, email, username, role, avatar_url
-    FROM
-      user_account
-    ${whereClause}
-    ${orderClause}
-    LIMIT $2 OFFSET (($1 - 1) * $2);
-  `;
+  // console.log({
+  //   countResult,
+  //   queryResult,
+  // });
 
-  console.log("query", query);
-  console.log("allParams", allParams);
-
-  const result = await dbClient.query(query, allParams);
-
-  let countWhereClause = whereClauseItemsForCount.join(" OR ");
-  countWhereClause = countWhereClause ? `WHERE ${countWhereClause}` : "";
-
-  const countQuery = `SELECT count(*) as total FROM user_account ${countWhereClause}`;
-
-  console.log("countQuery", countQuery);
-  console.log("paramsForCount", paramsForCount);
-
-  const countResult = await dbClient.query(countQuery, paramsForCount);
-
-  return { rows: result.rows, total: countResult.rows[0].total };
+  return { rows: queryResult, total: countResult.count };
 };
 
 const create = async ({
-  dbClient,
   firstname,
   lastname,
   email,
@@ -114,26 +69,16 @@ const create = async ({
   let results;
 
   try {
-    results = await dbClient.query(
-      `INSERT INTO user_account (
+    results = await knex("user_account")
+      .insert({
         firstname,
         lastname,
         email,
         username,
-        passwd,
-        avatar_url,
-        role
-      ) VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7
-      ) RETURNING *`,
-      [firstname, lastname, email, username, passwordHash, null, role]
-    );
+        passwd: passwordHash,
+        role,
+      })
+      .returning("id");
   } catch (error) {
     console.error(error);
 
@@ -156,11 +101,10 @@ const create = async ({
     throw new ApiError(httpStatus.BAD_REQUEST, errorMessage);
   }
 
-  return results.rows[0];
+  return results[0];
 };
 
 const update = async ({
-  dbClient,
   firstname,
   lastname,
   email,
@@ -169,56 +113,15 @@ const update = async ({
   role,
   id,
 }) => {
-  const params = [];
-  const columnAndPlaceholderList = [];
-
-  if (firstname !== undefined) {
-    params.push(firstname);
-    columnAndPlaceholderList.push(`firstname = $${params.length}`);
-  }
-
-  if (lastname !== undefined) {
-    params.push(lastname);
-    columnAndPlaceholderList.push(`lastname = $${params.length}`);
-  }
-
-  if (email !== undefined) {
-    params.push(email);
-    columnAndPlaceholderList.push(`email = $${params.length}`);
-  }
-
-  if (username !== undefined) {
-    params.push(username);
-    columnAndPlaceholderList.push(`username = $${params.length}`);
-  }
-
-  if (avatarUrl !== undefined) {
-    params.push(avatarUrl);
-    columnAndPlaceholderList.push(`avatar_url = $${params.length}`);
-  }
-
-  if (role !== undefined) {
-    params.push(role);
-    columnAndPlaceholderList.push(`role = $${params.length}`);
-  }
-
-  const columnsAndPlaceholdersSQL = columnAndPlaceholderList.join(", ");
-
-  params.push(id);
-  const idParamNumber = params.length;
-
-  const sqlQuery = `
-    UPDATE user_account SET
-      ${columnsAndPlaceholdersSQL}
-    WHERE
-      id = $${idParamNumber}
-  `;
-
-  console.log("userModel.update.sqlQuery", sqlQuery);
-  console.log("userModel.update.params", params);
-
   try {
-    await dbClient.query(sqlQuery, params);
+    await knex("user_account").where("id", id).update({
+      firstname,
+      lastname,
+      email,
+      username,
+      avatar_url: avatarUrl,
+      role,
+    });
   } catch (error) {
     console.error(error);
 
@@ -243,9 +146,7 @@ const update = async ({
 };
 
 // delete is not allowed as a variable nor function name
-const doDelete = async ({ dbClient, id }) => {
-  await dbClient.query("DELETE FROM user_account WHERE id = $1", [id]);
-};
+const doDelete = ({ id }) => knex("user_account").where("id", id).del();
 
 module.exports = {
   userModel: { getById, get, create, update, doDelete },

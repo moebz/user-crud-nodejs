@@ -21,7 +21,6 @@ const getUsers = async (req, res) => {
   console.log("getUsers.urlQuery", req.query);
 
   const result = await userModel.get({
-    dbClient: req.dbClient,
     pageSize,
     pageNumber,
     orderBy,
@@ -40,12 +39,11 @@ const getUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
-  const result = await userModel.getById({
-    dbClient: req.dbClient,
+  const user = await userModel.getById({
     id,
   });
 
-  res.status(httpStatus.OK).send({ data: result.rows, message: null });
+  res.status(httpStatus.OK).send({ data: user, message: null });
 };
 
 const createUser = async (req, res) => {
@@ -73,7 +71,6 @@ const createUser = async (req, res) => {
   const passwordHash = await hashPassword(passwd);
 
   const result = await userModel.create({
-    dbClient: req.dbClient,
     firstname,
     lastname,
     email,
@@ -81,6 +78,8 @@ const createUser = async (req, res) => {
     passwordHash,
     role,
   });
+
+  console.log({ result });
 
   const insertedId = result.id;
 
@@ -96,7 +95,6 @@ const createUser = async (req, res) => {
     });
 
     await userModel.update({
-      dbClient: req.dbClient,
       avatarUrl: filepath,
       id: insertedId,
     });
@@ -129,13 +127,12 @@ const updateUser = async (req, res) => {
   if (req.file) {
     avatarUrl = storeAvatarFile({ file: req.file, userId: id });
   } else if (req.body.deleteavatar) {
-    await deleteAvatarFile({ userModel, dbClient: req.dbClient, userId: id });
+    await deleteAvatarFile({ userModel, userId: id });
   }
 
   // throw new Error("prueba");
 
   await userModel.update({
-    dbClient: req.dbClient,
     firstname,
     lastname,
     email,
@@ -152,7 +149,6 @@ const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
   await userModel.doDelete({
-    dbClient: req.dbClient,
     id,
   });
 

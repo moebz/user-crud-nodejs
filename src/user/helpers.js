@@ -18,15 +18,12 @@ const storeAvatarFile = ({ file, userId }) => {
   return newFilepath;
 };
 
-const deleteAvatarFile = async ({ dbClient, userModel, userId }) => {
-  const result = await userModel.getById({
-    dbClient,
+const deleteAvatarFile = async ({ userModel, userId }) => {
+  const user = await userModel.getById({
     id: userId,
   });
 
-  console.log("deleteAvatarFile.result", result);
-
-  const user = result?.rows?.[0];
+  console.log("deleteAvatarFile.user", user);
 
   if (user?.avatar_url) {
     fs.unlinkSync(user.avatar_url);
