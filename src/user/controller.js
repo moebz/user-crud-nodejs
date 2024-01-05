@@ -47,7 +47,12 @@ const getUserById = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
+
+  console.log("1");
+
   const { firstname, lastname, email, username, passwd, role } = req.body;
+
+  console.log("2");
 
   const validationFields = {
     ...baseValidationFields,
@@ -59,16 +64,24 @@ const createUser = async (req, res) => {
       .messages({ "any.only": "{{#label}} does not match" }),
   };
 
+  console.log("3");
+
   const { joiErrors, commaSeparatedErrors } = validate(
     req.body,
     validationFields
   );
 
+  console.log("4");
+
   if (joiErrors) {
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
+  console.log("5");
+
   const passwordHash = await hashPassword(passwd);
+
+  console.log("6");
 
   const result = await userModel.create({
     firstname,
@@ -79,6 +92,8 @@ const createUser = async (req, res) => {
     role,
   });
 
+  console.log("7");
+
   console.log({ result });
 
   const insertedId = result.id;
@@ -87,6 +102,8 @@ const createUser = async (req, res) => {
   // from tmp dir to public dir
   // and save the public path
   // in the db.
+
+  console.log("8");
 
   if (req.file) {
     const filepath = storeAvatarFile({
@@ -99,6 +116,8 @@ const createUser = async (req, res) => {
       id: insertedId,
     });
   }
+
+  console.log("9");
 
   return res
     .status(httpStatus.CREATED)
