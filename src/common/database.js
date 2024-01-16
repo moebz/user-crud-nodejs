@@ -13,16 +13,18 @@ const {
   NODE_ENV,
 } = process.env;
 
+const databaseConfig = {
+  user: RDB_USER,
+  host: RDB_HOST,
+  database: NODE_ENV === "test" ? TEST_RDB_NAME : RDB_NAME,
+  password: RDB_PASSWORD,
+  port: RDB_PORT,
+  ssl: false,
+};
+
 const knex = require("knex")({
   client: "pg",
-  connection: {
-    host: RDB_HOST,
-    port: RDB_PORT,
-    user: RDB_USER,
-    database: RDB_NAME,
-    password: RDB_PASSWORD,
-    ssl: false,
-  },
+  connection: databaseConfig,
 });
 
 module.exports = { knex };

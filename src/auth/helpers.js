@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const constants = require("../common/constants");
+const { knex } = require("../common/database");
 
 const getSignedJwt = ({ tokenPayload, secret, expiresIn }) => {
   const tokenOptions = {
@@ -12,24 +13,18 @@ const getSignedJwt = ({ tokenPayload, secret, expiresIn }) => {
   return jwt.sign(tokenPayload, secret, tokenOptions);
 };
 
-const storeRefreshToken = async ({ dbClient, tokenValue, userAccountId }) => {
-  const results = await dbClient.query(
-    `INSERT INTO refresh_token (
-      token_value,
-      user_account_id
-    ) VALUES (
-      $1,
-      $2
-    ) RETURNING *`,
-    [tokenValue, userAccountId]
-  );
+const storeRefreshToken = async ({ tokenValue, userAccountId }) => {
+  const results = await knex("refresh_token").insert({
+    token_value: tokenValue,
+    user_account_id: userAccountId,
+  });
 
   const refreshTokenData = results.rows[0];
 
   return refreshTokenData;
 };
 
-const createRefreshToken = async (dbClient, userAccountId) => {
+const createRefreshToken = async (userAccountId) => {
   const refreshTokenPayload = {
     id: userAccountId,
   };
@@ -41,7 +36,6 @@ const createRefreshToken = async (dbClient, userAccountId) => {
   });
 
   const refreshTokenData = {
-    dbClient,
     tokenValue: refreshTokenValue,
     userAccountId,
   };
@@ -107,24 +101,18 @@ const getErrorMessageByErrorName = (errorName) => {
   return errorMessage;
 };
 
-const getRefreshTokenData = async ({ dbClient, refreshToken }) => {
-  const result = await dbClient.query(
-    "SELECT * FROM refresh_token WHERE token_value = $1",
-    [refreshToken]
-  );
+const getRefreshTokenData = async ({ refreshToken }) => {
+  const results = await knex("refresh_token")
+    .select()
+    .where("token_value", refreshToken);
 
-  const refreshTokenData = result?.rows?.[0];
+  const refreshTokenData = results?.[0];
 
   return refreshTokenData;
 };
 
-const deleteRefreshToken = async ({ dbClient, refreshToken }) => {
-  await dbClient.query(
-    `DELETE FROM refresh_token
-    WHERE token_value = $1`,
-    [refreshToken]
-  );
-};
+const deleteRefreshToken = ({ refreshToken }) =>
+  knex("refresh_token").where("token_value", refreshToken).del();
 
 const hashPassword = async (passwd) => {
   const saltRounds = 10;

@@ -1,8 +1,20 @@
-const { expect } = require("chai");
+require("dotenv").config();
+
+const { NODE_ENV } = process.env;
+
+if (NODE_ENV !== "test") {
+  throw new Error(
+    "Aborting. NODE_ENV isn't 'test'. Code may point to the wrong database. Was dotenv required and config()-ed? Does package.json have a test script that sets NODE_ENV to 'test'?"
+  );
+}
+
+// eslint-disable-next-line import/order
+const { knex } = require("../common/database");
+
 const request = require("supertest");
 const httpStatus = require("http-status");
-const app = require("../index");
-const helpers = require("../helpers");
+const app = require("../../index");
+const authHelpers = require("../auth/helpers");
 
 async function postUser(req, accessToken) {
   const { body } = await request(app)
@@ -13,98 +25,107 @@ async function postUser(req, accessToken) {
   return body;
 }
 
-// console.log = function () {};
+afterAll((done) => {
+  // Close app and database connection
+  // or else Jest will complain about it
+  // at the end of the test.
 
-require("dotenv").config();
+  // Close the server
+  app.close((err) => {
+    if (err) {
+      console.error(err);
+    }
 
-const { NODE_ENV } = process.env;
-
-if (NODE_ENV !== "test") {
-  throw new Error(
-    "Aborting. NODE_ENV isn't 'test'. Code may point to the wrong database. Was dotenv required and config()-ed? Does  package.json have a test script that sets NODE_ENV to 'test'?"
-  );
-}
-
-const { db } = require("../database");
+    // Then destroy the knex connection
+    knex.destroy(done);
+  });
+});
 
 describe("Integration: UserController", () => {
-  let client;
   let accessToken;
   let existingTestUserAndPassword;
 
-  before("Load app", async () => {
-    client = await db.getClient();
-  });
-
-  before("Insert user to perform login later", async () => {
+  // Insert user to perform login later
+  beforeAll(async () => {
     const testUserToInsert = {
       username: "theTestUser",
       passwd: "123456",
     };
 
-    const passwordHash = await helpers.hashPassword(testUserToInsert.passwd);
-
-    // ON CONFLICT DO NOTHING = if the user already exists, don't throw an error.
-    await client.query(
-      `INSERT INTO user_account (
-        firstname,
-        lastname,
-        email,
-        username,
-        passwd,
-        avatar_url
-      ) VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-      ) ON CONFLICT DO NOTHING RETURNING *`,
-      [null, null, null, testUserToInsert.username, passwordHash, null]
+    const passwordHash = await authHelpers.hashPassword(
+      testUserToInsert.passwd
     );
 
-    existingTestUserAndPassword = testUserToInsert;
-  });
+    console.log("testUserToInsert", testUserToInsert);
 
-  beforeEach("Login to get auth token", async () => {
+    // .onConflict().ignore(); = if the user already exists, don't throw an error.
+    await knex("user_account")
+      .insert({
+        firstname: null,
+        lastname: null,
+        email: null,
+        username: testUserToInsert.username,
+        passwd: passwordHash,
+        avatar_url: null,
+      })
+      .onConflict()
+      .ignore();
+
+    // Login to get auth token
+
+    existingTestUserAndPassword = testUserToInsert;
+
     const req = existingTestUserAndPassword;
     const { body } = await request(app).post("/login").send(req);
     accessToken = body.data.accessToken;
   });
 
   describe("POST /users", () => {
-    it("Should create a new user", async () => {
+    test("Should create a new user", async () => {
+      // Arrange.
+
       const uniqueUsername = `user${Date.now()}`;
 
       const req = {
         firstname: "integration test user 1",
+        lastname: "integration test user 1",
+        email: `fake${new Date().getTime()}@email.com`,
         username: uniqueUsername,
         passwd: "123456",
+        passwd_confirmation: "123456",
       };
+
+      // Act.
+
       await postUser(req, accessToken);
 
-      const { rows } = await client.query(
-        "SELECT firstname, username FROM user_account WHERE username = $1",
-        [req.username]
-      );
+      // Assert.
 
-      expect(rows).lengthOf(1);
+      const rows = await knex("user_account")
+        .select("firstname", "username")
+        .where("username", req.username);
 
-      expect(rows[0]).to.deep.equal({
+      expect(rows).toHaveLength(1);
+
+      expect(rows[0]).toEqual({
         firstname: req.firstname,
         username: req.username,
       });
     });
 
-    it("Should not register a user that is sending more than one image", async () => {
+    test("Should not register a user that is sending more than one image", async () => {
+      // Arrange.
+
       const mockUser = {
         firstname: "integrationtestIago",
         lastname: "testHedderly",
         email: "testihedderlyrr@upenn.edu",
         username: "testihedderlyrr",
         passwd: "test665nfsf",
+        passwd_confirmation: "test665nfsf",
       };
+
+      // Act.
 
       const res = await request(app)
         .post("/users")
@@ -116,13 +137,18 @@ describe("Integration: UserController", () => {
         .field("email", mockUser.email)
         .field("username", mockUser.username)
         .field("passwd", mockUser.passwd)
+        .field("passwd_confirmation", mockUser.passwd_confirmation)
         .attach("avatar", "tests/files/cat.png")
         .attach("avatar2", "tests/files/cat.png");
 
-      expect(res.status).to.equal(httpStatus.BAD_REQUEST);
+      // Assert.
+
+      expect(res.status).toBe(httpStatus.BAD_REQUEST);
     });
 
-    it("Should register a user that is sending one image", async () => {
+    test("Should register a user that is sending one image", async () => {
+      // Arrange.
+
       const uniqueUsername = `user${Date.now()}`;
       const uniqueEmail = `testihedderlyrr${Date.now()}@upenn.edu`;
 
@@ -132,7 +158,10 @@ describe("Integration: UserController", () => {
         email: uniqueEmail,
         username: uniqueUsername,
         passwd: "test665nfsf",
+        passwd_confirmation: "test665nfsf",
       };
+
+      // Act.
 
       const res = await request(app)
         .post("/users")
@@ -144,9 +173,12 @@ describe("Integration: UserController", () => {
         .field("email", mockUser.email)
         .field("username", mockUser.username)
         .field("passwd", mockUser.passwd)
+        .field("passwd_confirmation", mockUser.passwd_confirmation)
         .attach("avatar", "tests/files/cat.png");
 
-      expect(res.status).to.equal(httpStatus.CREATED);
+      // Assert.
+
+      expect(res.status).toBe(httpStatus.CREATED);
     });
   });
 });

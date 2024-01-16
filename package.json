@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "jest"
+    "test:unit": "jest --testRegex '\\.unit\\.test\\.js$'",
+    "test:int": "NODE_ENV=test jest --testRegex '\\.int\\.test\\.js$'"
   },
   "repository": {
     "type": "git",

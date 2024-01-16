@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-
+const { knex } = require("../common/database");
 const {
   getAccessTokenPayload,
   comparePasswords,
@@ -25,18 +25,13 @@ const login = async (req, res) => {
     });
   }
 
-  // console.log({ username, passwd });
-
   const errorMessage = `Username or password not valid`;
 
-  const result = await req.dbClient.query(
-    "SELECT * FROM user_account WHERE username = $1",
-    [username]
-  );
+  const result = await knex("user_account")
+    .where("username", username)
+    .select();
 
-  // console.log({ result });
-
-  const user = result?.rows?.[0];
+  const user = result?.[0];
 
   console.log("login.user", user);
 
@@ -62,7 +57,7 @@ const login = async (req, res) => {
     expiresIn: process.env.JWT_EXPIRATION,
   });
 
-  const refreshToken = await createRefreshToken(req.dbClient, user.id);
+  const refreshToken = await createRefreshToken(user.id);
 
   return res.status(httpStatus.OK).send({
     data: {
@@ -82,7 +77,6 @@ const doRefreshToken = async (req, res) => {
   }
 
   const refreshTokenData = await getRefreshTokenData({
-    dbClient: req.dbClient,
     refreshToken,
   });
 
@@ -104,7 +98,6 @@ const doRefreshToken = async (req, res) => {
 
   if (!verifResult.isValid) {
     deleteRefreshToken({
-      dbClient: req.dbClient,
       refreshToken: refreshTokenData.id,
     });
 
@@ -115,12 +108,9 @@ const doRefreshToken = async (req, res) => {
 
   const userId = refreshTokenData.user_account_id;
 
-  const result = await req.dbClient.query(
-    "SELECT * FROM user_account WHERE id = $1",
-    [userId]
-  );
+  const result = await knex("user_account").where("id", userId).select();
 
-  const user = result?.rows?.[0];
+  const user = result?.[0];
 
   if (!user) {
     return res.status(httpStatus.BAD_REQUEST).send({

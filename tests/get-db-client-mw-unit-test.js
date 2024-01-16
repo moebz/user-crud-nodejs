@@ -6,7 +6,6 @@ require("dotenv").config();
 
 // console.log({ nodeEnv: process.env.NODE_ENV });
 const { db } = require("../database");
-const { getDbClient } = require("../middleware");
 
 describe("Middleware to get database client instance", () => {
   let getClientStub;

@@ -1,16 +1,18 @@
-const httpStatus = require("http-status");
-
 require("dotenv").config();
 
-const { wrapMidd, errorHandler } = require("../src/common/helpers");
+const httpStatus = require("http-status");
 
-const authHelpers = require("../src/auth/helpers");
-const { createUser, getUserById } = require("../src/user/controller");
-const { userModel } = require("../src/user/model");
-const ApiError = require("../src/common/classes/ApiError");
+const authHelpers = require("../auth/helpers");
 
-jest.mock("../src/user/model");
-jest.mock("../src/auth/helpers");
+jest.mock("../auth/helpers");
+
+const { createUser, getUserById } = require("./controller");
+
+const { userModel } = require("./model");
+
+jest.mock("./model");
+
+const ApiError = require("../common/classes/ApiError");
 
 describe("Unit: UserController", () => {
   describe("createUser", () => {
@@ -134,6 +136,49 @@ describe("Unit: UserController", () => {
       // The create function should not have been called.
 
       expect(userModel.create).not.toHaveBeenCalled();
+    });
+
+    it("Should not register an user when the password confirmation doesn't match the password", async () => {
+      // Arrange.
+
+      const mockUser = {
+        firstname: "unittestIago",
+        lastname: "unittestHedderly",
+        email: "unittestihedderlyrr@upenn.edu",
+        username: "unittestihedderlyrr",
+        passwd: "someValue",
+        passwd_confirmation: "anotherValue",
+      };
+
+      const req = {
+        body: mockUser,
+      };
+
+      // Act.
+
+      let errorThrown;
+
+      try {
+        await createUser(req, res);
+      } catch (e) {
+        errorThrown = e;
+      }
+
+      // Assert.
+
+      // The error thrown should be an instance of ApiError.
+      expect(errorThrown).toBeInstanceOf(ApiError);
+
+      // The error thrown should have a status code of 400.
+      expect(errorThrown.statusCode).toBe(httpStatus.BAD_REQUEST);
+
+      // The create function should not have been called.
+      expect(userModel.create).not.toHaveBeenCalled();
+
+      // The error thrown should have a message that contains
+      // the words "password" and "confirmation".
+      expect(errorThrown.message).toMatch(/password/i);
+      expect(errorThrown.message).toMatch(/confirmation/i);
     });
   });
 

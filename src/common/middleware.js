@@ -107,14 +107,6 @@ const fileUploadHandler = (req, res, next) => {
   });
 };
 
-// Middleware to get a db client
-// to execute queries.
-const getDbClient = async (req, res, next) => {
-  const client = await db.getClient();
-  req.dbClient = client;
-  next();
-};
-
 // Returns a middleware that will throw an error
 // if the user role isn't included in the allowedRoles list.
 const allowOnlyTheseRoles = (allowedRoles) => (req, res, next) => {
@@ -127,6 +119,5 @@ const allowOnlyTheseRoles = (allowedRoles) => (req, res, next) => {
 module.exports = {
   verifyAccessToken,
   fileUploadHandler,
-  getDbClient,
   allowOnlyTheseRoles,
 };
