@@ -23,16 +23,20 @@ const getCommaSeparatedErrors = (joiErrors) => {
   return msg;
 };
 
-const validate = (fields, validationFields) => {
-  const validationConfig = {
-    abortEarly: false, // include all errors
-    allowUnknown: true, // ignore unknown props
-    stripUnknown: false, // false: don't remove unknown props
-  };
+const validate = (fields, validationFields, validationConfig = {}) => {
+  const {
+    abortEarly = false, // include all errors
+    allowUnknown = true, // ignore unknown props
+    stripUnknown = false, // false: don't remove unknown props
+  } = validationConfig;
 
   const validationSchema = JoiLib.object(validationFields);
 
-  const { error, value } = validationSchema.validate(fields, validationConfig);
+  const { error, value } = validationSchema.validate(fields, {
+    abortEarly,
+    allowUnknown,
+    stripUnknown,
+  });
 
   let commaSeparatedErrors = null;
 

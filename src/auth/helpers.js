@@ -88,32 +88,6 @@ const verifyToken = (tokenData) => {
   }
 };
 
-const getErrorMessageByErrorName = (errorName) => {
-  let errorMessage = "Refresh token has expired";
-
-  if (errorName !== constants.TOKEN_EXPIRED_ERROR) {
-    // The token is invalid. The error will be something general.
-
-    errorMessage =
-      "There was an error processing your request. Error code: RT004";
-  }
-
-  return errorMessage;
-};
-
-const getRefreshTokenData = async ({ refreshToken }) => {
-  const results = await knex("refresh_token")
-    .select()
-    .where("token_value", refreshToken);
-
-  const refreshTokenData = results?.[0];
-
-  return refreshTokenData;
-};
-
-const deleteRefreshToken = ({ refreshToken }) =>
-  knex("refresh_token").where("token_value", refreshToken).del();
-
 const hashPassword = async (passwd) => {
   const saltRounds = 10;
 
@@ -128,13 +102,12 @@ const comparePasswords = async (clearTextPassword, hashedPassword) =>
   bcrypt.compare(clearTextPassword, hashedPassword);
 
 module.exports = {
-  getAccessTokenPayload,
-  hashPassword,
-  comparePasswords,
-  createRefreshToken,
-  getSignedJwt,
-  verifyToken,
-  getRefreshTokenData,
-  deleteRefreshToken,
-  getErrorMessageByErrorName,
+  authHelpers: {
+    getAccessTokenPayload,
+    hashPassword,
+    comparePasswords,
+    createRefreshToken,
+    getSignedJwt,
+    verifyToken,
+  },
 };

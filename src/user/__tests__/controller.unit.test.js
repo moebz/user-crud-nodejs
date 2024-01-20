@@ -1,18 +1,18 @@
+/* eslint-disable camelcase */
+/* eslint-disable import/newline-after-import */
 require("dotenv").config();
 
 const httpStatus = require("http-status");
 
-const authHelpers = require("../auth/helpers");
+const { authHelpers } = require("../../auth/helpers");
+jest.mock("../../auth/helpers");
 
-jest.mock("../auth/helpers");
+const { createUser, getUserById } = require("../controller");
 
-const { createUser, getUserById } = require("./controller");
+const { userService } = require("../service");
+jest.mock("../service");
 
-const { userModel } = require("./model");
-
-jest.mock("./model");
-
-const ApiError = require("../common/classes/ApiError");
+const ApiError = require("../../common/classes/ApiError");
 
 describe("Unit: UserController", () => {
   describe("createUser", () => {
@@ -29,7 +29,7 @@ describe("Unit: UserController", () => {
 
       // Reset mocks.
 
-      userModel.create.mockClear();
+      userService.createUser.mockClear();
       res.status.mockClear();
       res.send.mockClear();
     });
@@ -47,13 +47,9 @@ describe("Unit: UserController", () => {
         role: "standard",
       };
 
-      const insertedId = 1000;
+      const insertedId = "1000";
 
-      const modelCreateResult = {
-        id: insertedId,
-      };
-
-      userModel.create.mockResolvedValue(modelCreateResult);
+      userService.createUser.mockResolvedValue(insertedId);
 
       const req = {
         body: incomingUserData,
@@ -69,20 +65,13 @@ describe("Unit: UserController", () => {
       // with the provided password.
 
       expect(res.status).toHaveBeenCalledTimes(1);
-      expect(authHelpers.hashPassword).toHaveBeenCalledWith(
-        incomingUserData.passwd
-      );
 
-      // UserModel.create should have been called one time
-      // with an object that contains all original data
-      // but passwd_confirmation and passwd (we only store the hash).
+      // userService.createUser should have been called one time
+      // with an object that contains the original data.
 
-      const { passwd, passwd_confirmation, ...expectedCreateParams } =
-        incomingUserData;
-
-      expect(userModel.create).toHaveBeenCalledTimes(1);
-      expect(userModel.create).toHaveBeenCalledWith(
-        expect.objectContaining(expectedCreateParams)
+      expect(userService.createUser).toHaveBeenCalledTimes(1);
+      expect(userService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining(incomingUserData)
       );
 
       // The controller should send a response with a
@@ -135,7 +124,7 @@ describe("Unit: UserController", () => {
 
       // The create function should not have been called.
 
-      expect(userModel.create).not.toHaveBeenCalled();
+      expect(userService.createUser).not.toHaveBeenCalled();
     });
 
     it("Should not register an user when the password confirmation doesn't match the password", async () => {
@@ -173,7 +162,7 @@ describe("Unit: UserController", () => {
       expect(errorThrown.statusCode).toBe(httpStatus.BAD_REQUEST);
 
       // The create function should not have been called.
-      expect(userModel.create).not.toHaveBeenCalled();
+      expect(userService.createUser).not.toHaveBeenCalled();
 
       // The error thrown should have a message that contains
       // the words "password" and "confirmation".
@@ -203,7 +192,7 @@ describe("Unit: UserController", () => {
     it("Should get user by id", async () => {
       // Arrange.
 
-      const idToSearch = 1000;
+      const idToSearch = "1000";
 
       const mockUser = {
         id: idToSearch,
@@ -215,7 +204,7 @@ describe("Unit: UserController", () => {
         avatar_url: null,
       };
 
-      userModel.getById.mockResolvedValue(mockUser);
+      userService.getUserById.mockResolvedValue(mockUser);
 
       const req = {
         params: {

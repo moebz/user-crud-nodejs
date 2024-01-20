@@ -9,12 +9,12 @@ if (NODE_ENV !== "test") {
 }
 
 // eslint-disable-next-line import/order
-const { knex } = require("../common/database");
+const { knex } = require("../../common/database");
 
 const request = require("supertest");
 const httpStatus = require("http-status");
-const app = require("../../index");
-const authHelpers = require("../auth/helpers");
+const app = require("../../../index");
+const authHelpers = require("../../auth/helpers");
 
 async function postUser(req, accessToken) {
   const { body } = await request(app)

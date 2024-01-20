@@ -3,10 +3,7 @@ const constants = require("../common/constants");
 const ApiError = require("../common/classes/ApiError");
 const { knex } = require("../common/database");
 
-const getById = async ({ id }) => {
-  const result = await knex("user_account").where("id", id).first();
-  return result;
-};
+const getById = ({ id }) => knex("user_account").where("id", id).first();
 
 const get = async ({
   pageNumber,
@@ -149,5 +146,5 @@ const update = async ({
 const doDelete = ({ id }) => knex("user_account").where("id", id).del();
 
 module.exports = {
-  userModel: { getById, get, create, update, doDelete },
+  userRepository: { getById, get, create, update, doDelete },
 };

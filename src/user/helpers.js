@@ -18,8 +18,8 @@ const storeAvatarFile = ({ file, userId }) => {
   return newFilepath;
 };
 
-const deleteAvatarFile = async ({ userModel, userId }) => {
-  const user = await userModel.getById({
+const deleteAvatarFile = async ({ userRepository, userId }) => {
+  const user = await userRepository.getById({
     id: userId,
   });
 
@@ -31,6 +31,8 @@ const deleteAvatarFile = async ({ userModel, userId }) => {
 };
 
 module.exports = {
-  storeAvatarFile,
-  deleteAvatarFile,
+  userHelpers: {
+    storeAvatarFile,
+    deleteAvatarFile,
+  },
 };

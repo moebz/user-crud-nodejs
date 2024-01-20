@@ -1,12 +1,9 @@
 const httpStatus = require("http-status");
 
-const { hashPassword } = require("../auth/helpers");
-
 const { JoiLib, validate } = require("../common/validator");
 const ApiError = require("../common/classes/ApiError");
 
-const { userModel } = require("./model");
-const { storeAvatarFile, deleteAvatarFile } = require("./helpers");
+const { userService } = require("./service");
 
 const baseValidationFields = {
   firstname: JoiLib.string().required().label("First name"),
@@ -20,7 +17,7 @@ const getUsers = async (req, res) => {
 
   console.log("getUsers.urlQuery", req.query);
 
-  const result = await userModel.get({
+  const result = await userService.getUsers({
     pageSize,
     pageNumber,
     orderBy,
@@ -37,20 +34,37 @@ const getUsers = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
+  const validationFields = {
+    id: JoiLib.string()
+      .pattern(/^\d+$/)
+      .messages({
+        "string.pattern.name": "ID must be a string of digits",
+      })
+      .required()
+      .label("ID"),
+  };
+
+  const { joiErrors, commaSeparatedErrors } = validate(
+    req.params,
+    validationFields
+  );
+
+  if (joiErrors) {
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
+  }
+
   const id = parseInt(req.params.id, 10);
 
-  const user = await userModel.getById({
-    id,
-  });
+  const user = await userService.getUserById(id);
 
   res.status(httpStatus.OK).send({ data: user, message: null });
 };
 
 const createUser = async (req, res) => {
-  const { firstname, lastname, email, username, passwd, role } = req.body;
-
   const validationFields = {
     ...baseValidationFields,
+    // Only admins can use this endpoint, so they can specify the role.
+    role: JoiLib.string().required().label("Role"),
     passwd: JoiLib.string().required().label("Password"),
     passwd_confirmation: JoiLib.any()
       .equal(JoiLib.ref("passwd"))
@@ -61,42 +75,18 @@ const createUser = async (req, res) => {
 
   const { joiErrors, commaSeparatedErrors } = validate(
     req.body,
-    validationFields
+    validationFields,
+    { allowUnknown: false }
   );
 
   if (joiErrors) {
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
-  const passwordHash = await hashPassword(passwd);
-
-  const result = await userModel.create({
-    firstname,
-    lastname,
-    email,
-    username,
-    passwordHash,
-    role,
+  const insertedId = await userService.createUser({
+    ...req.body,
+    file: req.file,
   });
-
-  const insertedId = result.id;
-
-  // Move avatar image
-  // from tmp dir to public dir
-  // and save the public path
-  // in the db.
-
-  if (req.file) {
-    const filepath = storeAvatarFile({
-      file: req.file,
-      userId: insertedId,
-    });
-
-    await userModel.update({
-      avatarUrl: filepath,
-      id: insertedId,
-    });
-  }
 
   return res
     .status(httpStatus.CREATED)
@@ -104,15 +94,21 @@ const createUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const { firstname, lastname, email, username, role } = req.body;
-
   console.log("updateUser.req.body", req.body);
 
-  const validationFields = baseValidationFields;
+  const validationFields = {
+    ...baseValidationFields,
+    id: JoiLib.string()
+      .pattern(/^\d+$/)
+      .messages({
+        "string.pattern.name": "ID must be a string of digits",
+      })
+      .required()
+      .label("ID"),
+  };
 
   const { joiErrors, commaSeparatedErrors } = validate(
-    req.body,
+    { ...req.body, id: req.params.id },
     validationFields
   );
 
@@ -120,33 +116,45 @@ const updateUser = async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
   }
 
-  let avatarUrl = null;
+  const id = parseInt(req.params.id, 10);
+  const { firstname, lastname, email, username, role } = req.body;
 
-  if (req.file) {
-    avatarUrl = storeAvatarFile({ file: req.file, userId: id });
-  } else if (req.body.deleteavatar) {
-    await deleteAvatarFile({ userModel, userId: id });
-  }
-
-  // throw new Error("prueba");
-
-  await userModel.update({
+  await userService.updateUser({
+    id,
     firstname,
     lastname,
     email,
     username,
-    avatarUrl,
     role,
-    id,
+    file: req.file,
   });
 
   res.status(httpStatus.OK).send(`User modified with ID: ${id}`);
 };
 
 const deleteUser = async (req, res) => {
+  const validationFields = {
+    id: JoiLib.string()
+      .pattern(/^\d+$/)
+      .messages({
+        "string.pattern.name": "ID must be a string of digits",
+      })
+      .required()
+      .label("ID"),
+  };
+
+  const { joiErrors, commaSeparatedErrors } = validate(
+    req.params,
+    validationFields
+  );
+
+  if (joiErrors) {
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
+  }
+
   const id = parseInt(req.params.id, 10);
 
-  await userModel.doDelete({
+  await userService.doDelete({
     id,
   });
 

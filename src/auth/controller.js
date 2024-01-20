@@ -2,62 +2,49 @@ const httpStatus = require("http-status");
 const { knex } = require("../common/database");
 const {
   getAccessTokenPayload,
-  comparePasswords,
-  createRefreshToken,
   getSignedJwt,
-  getRefreshTokenData,
   verifyToken,
   deleteRefreshToken,
   getErrorMessageByErrorName,
 } = require("./helpers");
+const { JoiLib, validate } = require("../common/validator");
+const ApiError = require("../common/classes/ApiError");
+const { authService } = require("./service");
 
 const login = async (req, res) => {
   const { username, passwd } = req.body;
 
-  if (
-    !username ||
-    typeof username !== "string" ||
-    !passwd ||
-    typeof passwd !== "string"
-  ) {
+  // Validate.
+
+  const validationFields = {
+    username: JoiLib.string().required().label("Username"),
+    passwd: JoiLib.string().required().label("Password"),
+  };
+
+  const { joiErrors, commaSeparatedErrors } = validate(
+    req.body,
+    validationFields
+  );
+
+  if (joiErrors) {
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
+  }
+
+  // Perform login attempt.
+
+  const loginResult = await authService.login(username, passwd);
+
+  if (!loginResult.success) {
+    console.log("loginResult.code", loginResult.code);
+
+    const errorMessage = `Username or password not valid`;
+
     return res.status(httpStatus.BAD_REQUEST).send({
-      message: "Username and password are required",
+      message: errorMessage,
     });
   }
 
-  const errorMessage = `Username or password not valid`;
-
-  const result = await knex("user_account")
-    .where("username", username)
-    .select();
-
-  const user = result?.[0];
-
-  console.log("login.user", user);
-
-  if (!user) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: `${errorMessage}`,
-    });
-  }
-
-  const loginResult = await comparePasswords(passwd, user.passwd);
-
-  if (!loginResult) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: `${errorMessage}`,
-    });
-  }
-
-  const tokenPayload = getAccessTokenPayload(user);
-
-  const accessToken = getSignedJwt({
-    tokenPayload,
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-
-  const refreshToken = await createRefreshToken(user.id);
+  const { accessToken, refreshToken } = loginResult;
 
   return res.status(httpStatus.OK).send({
     data: {
@@ -70,66 +57,51 @@ const login = async (req, res) => {
 const doRefreshToken = async (req, res) => {
   const { refreshToken } = req.body;
 
-  if (refreshToken == null) {
+  // Validate.
+
+  if (!refreshToken) {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: "There was an error processing your request. Error code: RT001",
     });
   }
 
-  const refreshTokenData = await getRefreshTokenData({
-    refreshToken,
-  });
+  // Perform refresh token attempt.
 
-  console.log(refreshTokenData);
+  const refreshTokenResult = await authService.doRefreshToken(refreshToken);
 
-  // If there is no matching token in the DB
-  // then the token was deleted manually or
-  // it was deleted in this function
-  // in a previous call
-  // because it was not valid anymore.
+  console.log("refreshTokenResult", refreshTokenResult);
 
-  if (!refreshTokenData) {
-    return res.status(httpStatus.BAD_REQUEST).send({
+  // Send response.
+
+  if (refreshTokenResult.success) {
+    return res.status(httpStatus.OK).json({
+      accessToken: refreshTokenResult.accessToken,
+    });
+  }
+
+  const responseMap = {
+    notFound: {
+      status: httpStatus.BAD_REQUEST,
       message: "There was an error processing your request. Error code: RT002",
-    });
-  }
-
-  const verifResult = verifyToken(refreshTokenData.token_value);
-
-  if (!verifResult.isValid) {
-    deleteRefreshToken({
-      refreshToken: refreshTokenData.id,
-    });
-
-    return res.status(httpStatus.FORBIDDEN).send({
-      message: getErrorMessageByErrorName(verifResult.errorName),
-    });
-  }
-
-  const userId = refreshTokenData.user_account_id;
-
-  const result = await knex("user_account").where("id", userId).select();
-
-  const user = result?.[0];
-
-  if (!user) {
-    return res.status(httpStatus.BAD_REQUEST).send({
+    },
+    expired: {
+      status: httpStatus.FORBIDDEN,
+      message: "The refresh token has expired",
+    },
+    invalid: {
+      status: httpStatus.BAD_REQUEST,
+      message: "There was an error processing your request. Error code: RT004",
+    },
+    userNotFound: {
+      status: httpStatus.BAD_REQUEST,
       message: "There was an error processing your request. Error code: RT003",
-    });
-  }
+    },
+  };
 
-  console.log("doRefreshToken.user", user);
+  const response = responseMap[refreshTokenResult.code];
 
-  const tokenPayload = getAccessTokenPayload(user);
-
-  const newAccessToken = getSignedJwt({
-    tokenPayload,
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-
-  return res.status(httpStatus.OK).json({
-    accessToken: newAccessToken,
+  return res.status(response.status).send({
+    message: response.message,
   });
 };
 
