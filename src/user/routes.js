@@ -10,15 +10,15 @@ router.get("/", wrapMidd(controller.getUsers));
 router.get("/:id", wrapMidd(controller.getUserById));
 router.post(
   "/",
-  // middleware.verifyAccessToken,
-  // middleware.allowOnlyTheseRoles(["admin"]),
+  middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   wrapMidd(middleware.fileUploadHandler),
   wrapMidd(controller.createUser)
 );
 router.put(
   "/:id",
-  // middleware.verifyAccessToken,
-  // middleware.allowOnlyTheseRoles(["admin"]),
+  middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   wrapMidd(middleware.fileUploadHandler),
   wrapMidd(controller.updateUser)
 );
@@ -28,15 +28,17 @@ router.put(
 // multipart form data in put nor patch)
 router.post(
   "/:id/update",
-  // middleware.verifyAccessToken,
-  // middleware.allowOnlyTheseRoles(["admin"]),
+  middleware.validateId,
+  middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   wrapMidd(middleware.fileUploadHandler),
   wrapMidd(controller.updateUser)
 );
 router.delete(
   "/:id",
-  // middleware.verifyAccessToken,
-  // middleware.allowOnlyTheseRoles(["admin"]),
+  middleware.validateId,
+  middleware.verifyAccessToken,
+  middleware.allowOnlyTheseRoles(["admin"]),
   wrapMidd(controller.deleteUser)
 );
 

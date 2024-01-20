@@ -1,12 +1,13 @@
+require("dotenv").config();
+
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const httpStatus = require("http-status");
 
-require("dotenv").config();
-const { db } = require("./database");
 const ApiError = require("./classes/ApiError");
+const { JoiLib, validate } = require("./validator");
 
 // console.log = function () {};
 
@@ -116,8 +117,32 @@ const allowOnlyTheseRoles = (allowedRoles) => (req, res, next) => {
   next();
 };
 
+const validateId = (req, res, next) => {
+  const validationFields = {
+    id: JoiLib.string()
+      .pattern(/^\d+$/)
+      .messages({
+        "string.pattern.name": "ID must be a string of digits",
+      })
+      .required()
+      .label("ID"),
+  };
+
+  const { joiErrors, commaSeparatedErrors } = validate(
+    { ...req.body, id: req.params.id },
+    validationFields
+  );
+
+  if (joiErrors) {
+    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
+  }
+
+  next();
+};
+
 module.exports = {
   verifyAccessToken,
   fileUploadHandler,
   allowOnlyTheseRoles,
+  validateId,
 };

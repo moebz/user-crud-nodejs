@@ -96,20 +96,9 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   console.log("updateUser.req.body", req.body);
 
-  const validationFields = {
-    ...baseValidationFields,
-    id: JoiLib.string()
-      .pattern(/^\d+$/)
-      .messages({
-        "string.pattern.name": "ID must be a string of digits",
-      })
-      .required()
-      .label("ID"),
-  };
-
   const { joiErrors, commaSeparatedErrors } = validate(
     { ...req.body, id: req.params.id },
-    validationFields
+    baseValidationFields
   );
 
   if (joiErrors) {
@@ -133,25 +122,6 @@ const updateUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const validationFields = {
-    id: JoiLib.string()
-      .pattern(/^\d+$/)
-      .messages({
-        "string.pattern.name": "ID must be a string of digits",
-      })
-      .required()
-      .label("ID"),
-  };
-
-  const { joiErrors, commaSeparatedErrors } = validate(
-    req.params,
-    validationFields
-  );
-
-  if (joiErrors) {
-    throw new ApiError(httpStatus.BAD_REQUEST, commaSeparatedErrors);
-  }
-
   const id = parseInt(req.params.id, 10);
 
   await userService.doDelete({
