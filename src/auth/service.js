@@ -24,7 +24,7 @@ const login = async (username, passwd) => {
     };
   }
 
-  const tokenPayload = authHelpers.getAccessTokenPayload(loginResult.user);
+  const tokenPayload = authHelpers.getAccessTokenPayload(user);
 
   const accessToken = authHelpers.getSignedJwt({
     tokenPayload,

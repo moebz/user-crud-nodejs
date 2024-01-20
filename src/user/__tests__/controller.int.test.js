@@ -14,7 +14,7 @@ const { knex } = require("../../common/database");
 const request = require("supertest");
 const httpStatus = require("http-status");
 const app = require("../../../index");
-const authHelpers = require("../../auth/helpers");
+const { authHelpers } = require("../../auth/helpers");
 
 async function postUser(req, accessToken) {
   const { body } = await request(app)
@@ -67,6 +67,7 @@ describe("Integration: UserController", () => {
         username: testUserToInsert.username,
         passwd: passwordHash,
         avatar_url: null,
+        role: "admin",
       })
       .onConflict()
       .ignore();
@@ -93,6 +94,7 @@ describe("Integration: UserController", () => {
         username: uniqueUsername,
         passwd: "123456",
         passwd_confirmation: "123456",
+        role: "standard",
       };
 
       // Act.
@@ -131,13 +133,14 @@ describe("Integration: UserController", () => {
         .post("/users")
         .set("Accept", "application/json; charset=utf-8")
         .set("access-token", accessToken)
-        .field("Content-Type", "multipart/form-data")
+        .set("Content-Type", "multipart/form-data")
         .field("firstname", mockUser.firstname)
         .field("lastname", mockUser.lastname)
         .field("email", mockUser.email)
         .field("username", mockUser.username)
         .field("passwd", mockUser.passwd)
         .field("passwd_confirmation", mockUser.passwd_confirmation)
+        .field("role", "standard")
         .attach("avatar", "tests/files/cat.png")
         .attach("avatar2", "tests/files/cat.png");
 
@@ -167,13 +170,14 @@ describe("Integration: UserController", () => {
         .post("/users")
         .set("Accept", "application/json; charset=utf-8")
         .set("access-token", accessToken)
-        .field("Content-Type", "multipart/form-data")
+        .set("Content-Type", "multipart/form-data")
         .field("firstname", mockUser.firstname)
         .field("lastname", mockUser.lastname)
         .field("email", mockUser.email)
         .field("username", mockUser.username)
         .field("passwd", mockUser.passwd)
         .field("passwd_confirmation", mockUser.passwd_confirmation)
+        .field("role", "standard")
         .attach("avatar", "tests/files/cat.png");
 
       // Assert.
