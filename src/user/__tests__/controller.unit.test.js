@@ -4,9 +4,6 @@ require("dotenv").config();
 
 const httpStatus = require("http-status");
 
-const { authHelpers } = require("../../auth/helpers");
-jest.mock("../../auth/helpers");
-
 const { createUser, getUserById } = require("../controller");
 
 const { userService } = require("../service");
