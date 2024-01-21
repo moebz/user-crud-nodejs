@@ -1,15 +1,20 @@
 const httpStatus = require("http-status");
 
-const { JoiLib, validate } = require("../common/validator");
+const { JoiLib, validate } = require("../common/validation/validator");
 const ApiError = require("../common/classes/ApiError");
 
 const { userService } = require("./service");
 
 const baseValidationFields = {
-  firstname: JoiLib.string().required().label("First name"),
-  lastname: JoiLib.string().required().label("Last name"),
-  email: JoiLib.string().required().email().label("Email"),
-  username: JoiLib.string().required().label("Username"),
+  firstname: JoiLib.string().htmlStrip().trim().required().label("First name"),
+  lastname: JoiLib.string().htmlStrip().trim().required().label("Last name"),
+  email: JoiLib.string().trim().required().email().label("Email"),
+  username: JoiLib.string().htmlStrip().trim().required().label("Username"),
+  // Joi can't validate a file field, but I
+  // need to declare it so it doesn't complain
+  // about the avatar being an unknown field.
+  // .any() doesn't run any validation.
+  avatar: JoiLib.any().label("File"),
 };
 
 const getUsers = async (req, res) => {
@@ -73,7 +78,7 @@ const createUser = async (req, res) => {
       .messages({ "any.only": "{{#label}} does not match" }),
   };
 
-  const { joiErrors, commaSeparatedErrors } = validate(
+  const { joiErrors, commaSeparatedErrors, transformedFields } = validate(
     req.body,
     validationFields,
     { allowUnknown: false }
@@ -84,7 +89,7 @@ const createUser = async (req, res) => {
   }
 
   const insertedId = await userService.createUser({
-    ...req.body,
+    ...transformedFields,
     file: req.file,
   });
 
@@ -123,11 +128,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-
-  await userService.doDelete({
-    id,
-  });
-
+  await userService.doDelete(id);
   res.status(httpStatus.OK).send(`User deleted with ID: ${id}`);
 };
 

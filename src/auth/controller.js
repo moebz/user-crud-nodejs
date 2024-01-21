@@ -7,7 +7,7 @@ const {
   deleteRefreshToken,
   getErrorMessageByErrorName,
 } = require("./helpers");
-const { JoiLib, validate } = require("../common/validator");
+const { JoiLib, validate } = require("../common/validation/validator");
 const ApiError = require("../common/classes/ApiError");
 const { authService } = require("./service");
 

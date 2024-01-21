@@ -1,6 +1,15 @@
 /* eslint-disable import/order */
+
+// Import Joi extensions.
+
 const JoiDate = require("@hapi/joi-date");
+
+const JoiHtmlStrip = require("./htmlStrip");
+
+// Set Joi defaults.
+
 // const messages = require('./joiTranslation.json');
+
 const Joi = require("joi").defaults((schema) =>
   schema.options({
     abortEarly: false,
@@ -9,7 +18,9 @@ const Joi = require("joi").defaults((schema) =>
   })
 );
 
-const JoiLib = Joi.extend(JoiDate);
+// Apply extensions.
+
+const JoiLib = Joi.extend(JoiDate).extend(JoiHtmlStrip);
 
 const getCommaSeparatedErrors = (joiErrors) => {
   let msg = "Validation errors: ";
@@ -44,7 +55,7 @@ const validate = (fields, validationFields, validationConfig = {}) => {
     commaSeparatedErrors = getCommaSeparatedErrors(error);
   }
 
-  return { joiErrors: error, value, commaSeparatedErrors };
+  return { joiErrors: error, commaSeparatedErrors, transformedFields: value };
 };
 
 module.exports = {

@@ -7,7 +7,7 @@ const fs = require("fs");
 const httpStatus = require("http-status");
 
 const ApiError = require("./classes/ApiError");
-const { JoiLib, validate } = require("./validator");
+const { JoiLib, validate } = require("./validation/validator");
 
 // console.log = function () {};
 
