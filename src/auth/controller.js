@@ -1,12 +1,4 @@
 const httpStatus = require("http-status");
-const { knex } = require("../common/database");
-const {
-  getAccessTokenPayload,
-  getSignedJwt,
-  verifyToken,
-  deleteRefreshToken,
-  getErrorMessageByErrorName,
-} = require("./helpers");
 const { JoiLib, validate } = require("../common/validation/validator");
 const ApiError = require("../common/classes/ApiError");
 const { authService } = require("./service");

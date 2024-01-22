@@ -1,6 +1,5 @@
 const router = require("express").Router();
 
-const middleware = require("../common/middleware");
 const authController = require("./controller");
 
 const { wrapMidd } = require("../common/helpers");
