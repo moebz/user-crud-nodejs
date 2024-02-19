@@ -1,3 +1,15 @@
+## Start
+
+npm start
+
+or
+
+npm run start:test
+
+to use the test database (TEST_RDB_NAME) instead of the main database (RDB_NAME).
+
+The TEST_RDB_NAME database is used in node integration tests and cypress E2E tests. 
+
 # Generating the test database used in the integration tests
 
 The script example for generating the test database is located in testDatabaseGeneration/generateTestingDatabase.sh.example.
