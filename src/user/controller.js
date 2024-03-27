@@ -51,7 +51,7 @@ const getUserById = async (req, res) => {
 
   const { joiErrors, commaSeparatedErrors } = validate(
     req.params,
-    validationFields
+    validationFields,
   );
 
   if (joiErrors) {
@@ -60,7 +60,14 @@ const getUserById = async (req, res) => {
 
   const id = parseInt(req.params.id, 10);
 
-  const user = await userService.getUserById(id);
+  const user = await userService.getUserById(id, [
+    "id",
+    "firstname",
+    "lastname",
+    "email",
+    "username",
+    "role",
+  ]);
 
   res.status(httpStatus.OK).send({ data: user, message: null });
 };
@@ -81,7 +88,7 @@ const createUser = async (req, res) => {
   const { joiErrors, commaSeparatedErrors, transformedFields } = validate(
     req.body,
     validationFields,
-    { allowUnknown: false }
+    { allowUnknown: false },
   );
 
   if (joiErrors) {
@@ -103,7 +110,7 @@ const updateUser = async (req, res) => {
 
   const { joiErrors, commaSeparatedErrors } = validate(
     { ...req.body, id: req.params.id },
-    baseValidationFields
+    baseValidationFields,
   );
 
   if (joiErrors) {

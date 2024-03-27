@@ -3,7 +3,8 @@ const constants = require("../common/constants");
 const ApiError = require("../common/classes/ApiError");
 const { knex } = require("../common/database");
 
-const getById = ({ id }) => knex("user_account").where("id", id).first();
+const getById = ({ id }, columns) =>
+  knex("user_account").select(columns).where("id", id).first();
 
 const get = async ({
   pageNumber,

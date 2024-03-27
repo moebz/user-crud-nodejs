@@ -23,10 +23,13 @@ const getUsers = async ({
   };
 };
 
-const getUserById = async (id) => {
-  const user = await userRepository.getById({
-    id,
-  });
+const getUserById = async (id, columns) => {
+  const user = await userRepository.getById(
+    {
+      id,
+    },
+    columns,
+  );
 
   return user;
 };
