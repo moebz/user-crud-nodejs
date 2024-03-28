@@ -130,13 +130,13 @@ const updateUser = async (req, res) => {
     file: req.file,
   });
 
-  res.status(httpStatus.OK).send(`User modified with ID: ${id}`);
+  res.status(httpStatus.OK).send({ message: `User modified with ID: ${id}` });
 };
 
 const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   await userService.doDelete(id);
-  res.status(httpStatus.OK).send(`User deleted with ID: ${id}`);
+  res.status(httpStatus.OK).send({ message: `User deleted with ID: ${id}` });
 };
 
 module.exports = {
