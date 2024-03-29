@@ -56,8 +56,6 @@ describe("Integration: UserController", () => {
       testUserToInsert.passwd
     );
 
-    console.log("testUserToInsert", testUserToInsert);
-
     // .onConflict().ignore(); = if the user already exists, don't throw an error.
     await knex("user_account")
       .insert({

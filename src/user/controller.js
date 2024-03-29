@@ -20,8 +20,6 @@ const baseValidationFields = {
 const getUsers = async (req, res) => {
   const { pageSize, pageNumber, orderBy, orderDirection, filter } = req.query;
 
-  console.log("getUsers.urlQuery", req.query);
-
   const result = await userService.getUsers({
     pageSize,
     pageNumber,
@@ -106,8 +104,6 @@ const createUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  console.log("updateUser.req.body", req.body);
-
   const { joiErrors, commaSeparatedErrors } = validate(
     { ...req.body, id: req.params.id },
     baseValidationFields,

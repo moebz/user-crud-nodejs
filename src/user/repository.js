@@ -48,11 +48,6 @@ const get = async ({
 
   const queryResult = await query;
 
-  // console.log({
-  //   countResult,
-  //   queryResult,
-  // });
-
   return { rows: queryResult, total: countResult.count };
 };
 

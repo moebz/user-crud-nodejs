@@ -6,8 +6,6 @@ const { authRepository } = require("./repository");
 const login = async (username, passwd) => {
   const user = await authRepository.getUserByUsername(username);
 
-  console.log("login.user", user);
-
   if (!user) {
     return {
       success: false,
@@ -47,8 +45,6 @@ const doRefreshToken = async (refreshToken) => {
     refreshToken,
   });
 
-  console.log(refreshTokenData);
-
   // If there is no matching token in the DB
   // then the token was deleted manually or
   // it was deleted in this function
@@ -79,8 +75,6 @@ const doRefreshToken = async (refreshToken) => {
   if (!user) {
     return { success: false, code: "userNotFound" };
   }
-
-  console.log("doRefreshToken.user", user);
 
   const tokenPayload = authHelpers.getAccessTokenPayload(user);
 

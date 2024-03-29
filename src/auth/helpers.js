@@ -39,11 +39,6 @@ const createRefreshToken = async (userAccountId) => {
     userAccountId,
   };
 
-  console.log({
-    refreshTokenValue,
-    userAccountId,
-  });
-
   await storeRefreshToken(refreshTokenData);
 
   return refreshTokenValue;

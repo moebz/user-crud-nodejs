@@ -27,8 +27,6 @@ const login = async (req, res) => {
   const loginResult = await authService.login(username, passwd);
 
   if (!loginResult.success) {
-    console.log("loginResult.code", loginResult.code);
-
     const errorMessage = `Username or password not valid`;
 
     return res.status(httpStatus.BAD_REQUEST).send({
@@ -60,8 +58,6 @@ const doRefreshToken = async (req, res) => {
   // Perform refresh token attempt.
 
   const refreshTokenResult = await authService.doRefreshToken(refreshToken);
-
-  console.log("refreshTokenResult", refreshTokenResult);
 
   // Send response.
 

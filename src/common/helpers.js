@@ -9,7 +9,6 @@ const httpStatus = require("http-status");
  * @returns
  */
 const wrapMidd = (fn) => async (req, res, next) => {
-  // console.log({ "wrapMidd.req": Object.getOwnPropertyNames(req) });
   try {
     await fn(req, res, next);
   } catch (err) {

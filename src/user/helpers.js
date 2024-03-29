@@ -23,8 +23,6 @@ const deleteAvatarFile = async ({ userRepository, userId }) => {
     id: userId,
   });
 
-  console.log("deleteAvatarFile.user", user);
-
   if (user?.avatar_url) {
     fs.unlinkSync(user.avatar_url);
   }

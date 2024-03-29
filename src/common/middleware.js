@@ -9,8 +9,6 @@ const httpStatus = require("http-status");
 const ApiError = require("./classes/ApiError");
 const { JoiLib, validate } = require("./validation/validator");
 
-// console.log = function () {};
-
 const { JWT_SECRET } = process.env;
 
 const verifyAccessToken = async (request, response, next) => {
@@ -26,11 +24,9 @@ const verifyAccessToken = async (request, response, next) => {
         .send({ message: "No user token provided." });
     }
 
-    console.log("verifyAccessToken.rawToken", token);
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    console.log("verifyAccessToken.decoded", decoded);
 
     if (!decoded?.role) {
       // The access token must have a role field.
@@ -83,14 +79,11 @@ const multerInstance = multer({
 });
 
 const fileUploadHandler = (req, res, next) => {
-  // console.log({'fileUploadHandler.req': Object.getOwnPropertyNames(req)});
 
   const fileUploadMiddleware = multerInstance.single("avatar");
 
   fileUploadMiddleware(req, res, (err) => {
-    // console.log({'fileUploadMiddleware.req': Object.getOwnPropertyNames(req)});
 
-    // console.log('fileUploadMiddleware.err', err);
     if (err instanceof multer.MulterError && err?.code === "LIMIT_FILE_SIZE") {
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "Uploaded file size should be less than 2 MB",
@@ -98,7 +91,6 @@ const fileUploadHandler = (req, res, next) => {
     }
 
     if (err) {
-      // console.log('fileUploadHandler.err', err);
       return res.status(httpStatus.BAD_REQUEST).send({
         message: "An unknown error occurred",
       });
