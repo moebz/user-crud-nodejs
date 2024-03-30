@@ -70,7 +70,7 @@ const doRefreshToken = async (refreshToken) => {
 
   const userId = refreshTokenData.user_account_id;
 
-  const user = await userRepository.getById(userId);
+  const user = await userRepository.getById({ id: userId });
 
   if (!user) {
     return { success: false, code: "userNotFound" };
