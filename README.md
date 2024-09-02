@@ -1,6 +1,6 @@
 ## Description
 
-This is a users CRUD backend where I apply what I've learned about unit and integration testing.
+This is a users CRUD backend where I apply what I've learned about unit and integration testing with Jest.
 
 It's used by this react app:
 https://github.com/moebz/user-crud-react
