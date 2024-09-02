@@ -2,6 +2,9 @@
 
 This is a users CRUD backend where I apply what I've learned about unit and integration testing.
 
+It's used by this react app:
+https://github.com/moebz/user-crud-react
+
 ## Generating the test database used in the integration tests
 
 The script example for generating the test database is located in testDatabaseGeneration/generateTestingDatabase.sh.example.
